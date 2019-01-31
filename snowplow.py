@@ -184,8 +184,20 @@ class SnowPlow:
                 action)
             self.iface.removeToolBarIcon(action)
 
+
+    def get_by_priority(self, priorities, layer):
+        '''Returns ids of those items which have given priority (KOD_R)'''
+
+        queries = ['KOD_R=\'{}\''.format(x) for x in priorities]
+        query = ' OR '.join(queries)
+        expr = QgsExpression(query)
+        selection = layer.getFeatures(QgsFeatureRequest(expr))
+        ids = [x.id() for x in selection]
+        return ids
+
     def apply_filter(self):
         """Apply selected filtering rules."""
+
         QgsMessageLog.logMessage('aplied', 'SnowPlow')
         checked = [
         self.dlg.priority1.isChecked(),
@@ -193,16 +205,21 @@ class SnowPlow:
         self.dlg.priority3.isChecked(),
         self.dlg.priority4.isChecked()
         ]
-        priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))] # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
-
-        queries = ['KOD_R=\'{}\''.format(x) for x in priorities]
-        query = ' OR '.join(queries)
-
         layer = self.iface.activeLayer()
-        expr = QgsExpression(query)
-        selection = layer.getFeatures(QgsFeatureRequest(expr))
-        ids = [x.id() for x in selection]
-        layer.select(ids)
+        priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
+        no_priorities = set(range(len(checked)+1)[1:]).difference(set(priorities))          # those indices which are not in `priorities`
+
+        # Debugging messages
+        x = 'prio: {}'.format(','.join(map(str, priorities)))
+        y = 'noio: {}'.format(','.join(map(str, no_priorities)))
+        QgsMessageLog.logMessage(x, 'SnowPlow')
+        QgsMessageLog.logMessage(y, 'SnowPlow')
+
+        deselected = self.get_by_priority(no_priorities, layer)
+        layer.deselect(deselected)
+
+        selected = self.get_by_priority(priorities, layer)
+        layer.select(selected)
         self.iface.mapCanvas().setSelectionColor( QColor("red") )
         # self.iface.mapCanvas().zoomToSelected()
 

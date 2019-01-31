@@ -17,12 +17,26 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>10</y>
+     <y>30</y>
      <width>511</width>
-     <height>131</height>
+     <height>141</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <widget class="QLabel" name="label">
+      <property name="font">
+       <font>
+        <pointsize>15</pointsize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
+      </property>
+      <property name="text">
+       <string>Priority of snow plowing</string>
+      </property>
+     </widget>
+    </item>
     <item>
      <widget class="QCheckBox" name="priority1">
       <property name="text">
@@ -68,9 +82,9 @@
   <widget class="QDialogButtonBox" name="buttons">
    <property name="geometry">
     <rect>
-     <x>0</x>
+     <x>10</x>
      <y>400</y>
-     <width>521</width>
+     <width>511</width>
      <height>32</height>
     </rect>
    </property>

@@ -21,11 +21,12 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication 
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction, QDialogButtonBox
+from PyQt5.QtCore import * # QSettings, QTranslator, qVersion, QCoreApplication 
+from PyQt5.QtGui import * #QIcon
+from PyQt5.QtWidgets import *#QAction, QDialogButtonBox
 
-from qgis.core import QgsMessageLog
+from qgis.core import * #QgsMessageLog, QgsExpression, QgsFeatureRequest
+from itertools import compress
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -184,9 +185,27 @@ class SnowPlow:
             self.iface.removeToolBarIcon(action)
 
     def apply_filter(self):
+        """Apply selected filtering rules."""
         QgsMessageLog.logMessage('aplied', 'SnowPlow')
-        """Apple selected filtering rules."""
-        # for f in iface.activeLayer().getFeatures():
+        checked = [
+        self.dlg.priority1.isChecked(),
+        self.dlg.priority2.isChecked(),
+        self.dlg.priority3.isChecked(),
+        self.dlg.priority4.isChecked()
+        ]
+        priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))] # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
+
+        queries = ['KOD_R=\'{}\''.format(x) for x in priorities]
+        query = ' OR '.join(queries)
+
+        layer = self.iface.activeLayer()
+        expr = QgsExpression(query)
+        selection = layer.getFeatures(QgsFeatureRequest(expr))
+        ids = [x.id() for x in selection]
+        layer.select(ids)
+        self.iface.mapCanvas().setSelectionColor( QColor("red") )
+        # self.iface.mapCanvas().zoomToSelected()
+
 
     def run(self):
         """Run method that performs all the real work"""

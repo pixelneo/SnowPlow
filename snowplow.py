@@ -21,9 +21,11 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication
+from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication 
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QAction
+from PyQt5.QtWidgets import QAction, QDialogButtonBox
+
+from qgis.core import QgsMessageLog
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -181,6 +183,10 @@ class SnowPlow:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def apply_filter(self):
+        QgsMessageLog.logMessage('aplied', 'SnowPlow')
+        """Apple selected filtering rules."""
+        # for f in iface.activeLayer().getFeatures():
 
     def run(self):
         """Run method that performs all the real work"""
@@ -190,13 +196,21 @@ class SnowPlow:
         if self.first_start == True:
             self.first_start = False
             self.dlg = SnowPlowDialog()
+            apply_button = self.dlg.buttons.button(QDialogButtonBox.Apply)
+            apply_button.clicked.connect(self.apply_filter)
+            ok_button = self.dlg.buttons.button(QDialogButtonBox.Ok)
+            ok_button.clicked.connect(self.apply_filter)
 
         # show the dialog
         self.dlg.show()
+        bla = self.dlg.priority1.isChecked()
+        if bla:
+            QgsMessageLog.logMessage('ano', 'SnowPlow')
+        else:
+            QgsMessageLog.logMessage('ne', 'SnowPlow')
+
         # Run the dialog event loop
         result = self.dlg.exec_()
         # See if OK was pressed
         if result:
-            # Do something useful here - delete the line containing pass and
-            # substitute with your code.
             pass

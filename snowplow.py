@@ -184,30 +184,44 @@ class SnowPlow:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def get_by_field(self, values, layer, field):
+        '''Returns ids of those items which have given `field` equal to `value`'''
 
-    def get_by_priority(self, priorities, layer):
-        '''Returns ids of those items which have given priority (KOD_R)'''
-
-        queries = ['KOD_R=\'{}\''.format(x) for x in priorities]
+        queries = ['{}=\'{}\''.format(field, x) for x in values]
         query = ' OR '.join(queries)
         expr = QgsExpression(query)
         selection = layer.getFeatures(QgsFeatureRequest(expr))
         ids = [x.id() for x in selection]
         return ids
 
+
+    def get_inputs(self):
+        checked = [
+        self.dlg.priority1.isChecked(),
+        self.dlg.priority2.isChecked(),
+        self.dlg.priority3.isChecked()
+        ]
+        checked2 = [
+        self.dlg.salt.isChecked(),
+        self.dlg.inert.isChecked(),
+        self.dlg.plow.isChecked()
+        ]
+        priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
+        no_priorities = set(range(len(checked)+1)[1:]).difference(set(priorities))          # those indices which are not in `priorities`
+
+        method = [x+1 for x in list(compress(list(range(len(checked2))), checked2))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
+        no_method = set(range(len(method)+1)[1:]).difference(set(method))          # those indices which are not in `priorities`
+
+        return ((priorities, no_priorities), (method, no_method))
+
+
     def apply_filter(self):
         """Apply selected filtering rules."""
 
         QgsMessageLog.logMessage('aplied', 'SnowPlow')
-        checked = [
-        self.dlg.priority1.isChecked(),
-        self.dlg.priority2.isChecked(),
-        self.dlg.priority3.isChecked(),
-        self.dlg.priority4.isChecked()
-        ]
+
+        ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
         layer = self.iface.activeLayer()
-        priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
-        no_priorities = set(range(len(checked)+1)[1:]).difference(set(priorities))          # those indices which are not in `priorities`
 
         # Debugging messages
         x = 'prio: {}'.format(','.join(map(str, priorities)))
@@ -215,10 +229,12 @@ class SnowPlow:
         QgsMessageLog.logMessage(x, 'SnowPlow')
         QgsMessageLog.logMessage(y, 'SnowPlow')
 
-        deselected = self.get_by_priority(no_priorities, layer)
+        deselected = self.get_by_field(no_priorities, layer, 'priority')
+        deselected += self.get_by_field(no_method, layer, 'maintenance_method')
         layer.deselect(deselected)
 
-        selected = self.get_by_priority(priorities, layer)
+        selected = self.get_by_field(priorities, layer, 'priority')
+        selected += self.get_by_field(method, layer, 'maintenance_method')
         layer.select(selected)
         self.iface.mapCanvas().setSelectionColor( QColor("red") )
         # self.iface.mapCanvas().zoomToSelected()

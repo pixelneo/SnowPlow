@@ -236,7 +236,7 @@ class SnowPlow:
         selected = self.get_by_field(priorities, layer, 'priority')
         selected += self.get_by_field(method, layer, 'maintenance_method')
         layer.select(selected)
-        self.iface.mapCanvas().setSelectionColor( QColor("red") )
+        self.iface.mapCanvas().setSelectionColor( QColor("blue") )
         # self.iface.mapCanvas().zoomToSelected()
 
 

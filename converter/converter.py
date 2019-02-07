@@ -2,7 +2,9 @@
 import geojson
 
 def convert_to_geojson(data, filename='processed_valid.geojson'):
-    ''' This converts processed.geojson to valid geojson file.
+    '''
+        This converts processed.geojson to valid geojson file.
+
         Outline of the output file:
         featurecollection
             feature

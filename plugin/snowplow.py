@@ -194,6 +194,9 @@ class SnowPlow:
         ids = [x.id() for x in selection]
         return ids
 
+    def colourize(self):
+        pass
+
 
     def get_inputs(self):
         checked = [
@@ -219,6 +222,11 @@ class SnowPlow:
         """Apply selected filtering rules."""
 
         QgsMessageLog.logMessage('aplied', 'SnowPlow')
+
+        # colourize 
+        # TODO undo
+        if self.dlg.colourize.isChecked():
+            colourize()
 
         ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
         layer = self.iface.activeLayer()

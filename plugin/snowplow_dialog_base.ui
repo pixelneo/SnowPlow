@@ -35,7 +35,7 @@
      <x>10</x>
      <y>10</y>
      <width>511</width>
-     <height>301</height>
+     <height>381</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -146,9 +146,23 @@
      </layout>
     </item>
     <item>
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QCheckBox" name="colourize">
       <property name="text">
        <string>Colourize Circuits</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="Line" name="line_2">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
       </property>
      </widget>
     </item>
@@ -171,7 +185,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QListView" name="cars"/>
+         <widget class="QListWidget" name="cars">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::MultiSelection</enum>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>

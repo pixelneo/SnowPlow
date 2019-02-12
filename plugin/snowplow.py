@@ -34,7 +34,17 @@ from .resources import *
 from .snowplow_dialog import SnowPlowDialog
 import os.path
 
-from utils import *
+# from utils_snowplow import *
+
+def qgis_list_to_list(qgis_str):
+    '''
+        This method converts list in string in format (element_count:element0,element1,...,elementn-1)
+        to python list
+    '''
+    # comma delimited list
+    elems_str = qgis_str.split(':')[1].rstrip(')')
+    lst = [int(x) for x in elems_str.split(',')]
+    return lst
 
 
 class SnowPlow:
@@ -279,15 +289,14 @@ class SnowPlow:
 
         # fill listview with car IDs
         layer = self.iface.activeLayer()
-        ite= layer.getFeatures()
-        n = next(ite)
-        n = next(ite)
-        att = n.attributes()
-        x = ','.join([str(y) for y in att])
+        car_ids = set()
 
-        car_ids = n['car_id']
-        QgsMessageLog.logMessage(x, 'SnowPlow')
-        QgsMessageLog.logMessage(str(car_ids[0]), 'SnowPlow')
+        for f in layer.getFeatures():
+            for car in qgis_list_to_list(f['car_id']):
+                car_ids.add(car)
+
+        self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+        QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
 
 
         # Run the dialog event loop

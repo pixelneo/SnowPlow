@@ -42,8 +42,18 @@ def qgis_list_to_list(qgis_str):
         to python list
     '''
     # comma delimited list
-    lst = [int(x) for x in elems_str.split(',')]
+    lst = [int(x) for x in qgis_str.split(',')]
     return lst
+
+class DataHolder:
+    def __init__(self):
+        self.colours = ['green', 'red', 'yellow', 'blue']
+        self.current = 0
+
+    def next_colour(self):
+        self.current = (self.current + 1) % len(self.colours)
+        return self.colours[self.current]
+
 
 
 class SnowPlow:
@@ -225,18 +235,27 @@ class SnowPlow:
 
         return ((priorities, no_priorities), (method, no_method))
 
+    def select_new_car(self, symbol, renderer, label, expression, color):
+        layer = self.iface.activeLayer()
+        root_rule = renderer.rootRule()
+        rule = root_rule.children()[0].clone()
+        rule.setLabel(label)
+        rule.setFilterExpression(expression)
+        rule.symbol().setColor(QColor(color))
+        root_rule.appendChild(rule)
+        layer.setRenderer(renderer)
+        layer.triggerRepaint()
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
     def select_cars(self):
         layer = self.iface.activeLayer()
-        items = self.dlg.cars.selectedItems()
-
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        symbol.setColor(QColor(Qt.red))
-
         renderer = QgsRuleBasedRenderer(symbol)
-        layer.setRenderer(renderer)
+        for car in self.dlg.cars.selectedItems():
+            QgsMessageLog.logMessage(car.text(), 'SnowPlow')
+            self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour()) 
 
-        cat = QgsRendererCategory(1, symbol, "1")
-        renderer.addCategory(cat)
+
 
     def colourize(self):
         pass
@@ -249,10 +268,10 @@ class SnowPlow:
         # colourize 
         # TODO undo
         if self.dlg.colourize.isChecked():
-            colourize()
+            self.colourize()
 
-        if self.dlf.cars_activate.isChecked():
-            select_cars()
+        if self.dlg.cars_activate.isChecked():
+            self.select_cars()
 
 
         ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
@@ -277,6 +296,7 @@ class SnowPlow:
 
     def run(self):
         """Run method that performs all the real work"""
+        self.data_holder = DataHolder()
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
@@ -301,14 +321,15 @@ class SnowPlow:
         car_ids = set()
         try:
             for f in layer.getFeatures():
-                for car in qgis_list_to_list(f['car_id_string']):
+                for car in qgis_list_to_list(f['car_id_str']):
                     car_ids.add(car)
 
             self.dlg.cars.addItems([str(x) for x in list(car_ids)])
             QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
         except Exception as e:
             QgsMessageLog.logMessage('Loaded file does not have attributes for filling up listwidget.', 'SnowPlow')
-            QgsMessageLog.logMessage(e, 'SnowPlow')
+            raise e
+
 
         # Run the dialog event loop
         result = self.dlg.exec_()

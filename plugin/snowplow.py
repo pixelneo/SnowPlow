@@ -34,6 +34,8 @@ from .resources import *
 from .snowplow_dialog import SnowPlowDialog
 import os.path
 
+from utils import *
+
 
 class SnowPlow:
     """QGIS Plugin Implementation."""
@@ -194,9 +196,6 @@ class SnowPlow:
         ids = [x.id() for x in selection]
         return ids
 
-    def colourize(self):
-        pass
-
 
     def get_inputs(self):
         checked = [
@@ -217,6 +216,12 @@ class SnowPlow:
 
         return ((priorities, no_priorities), (method, no_method))
 
+    def select_cars(self):
+        layer = self.iface.activeLayer()
+        pass
+
+    def colourize(self):
+        pass
 
     def apply_filter(self):
         """Apply selected filtering rules."""
@@ -227,6 +232,9 @@ class SnowPlow:
         # TODO undo
         if self.dlg.colourize.isChecked():
             colourize()
+
+        select_cars()
+
 
         ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
         layer = self.iface.activeLayer()
@@ -268,6 +276,19 @@ class SnowPlow:
             QgsMessageLog.logMessage('ano', 'SnowPlow')
         else:
             QgsMessageLog.logMessage('ne', 'SnowPlow')
+
+        # fill listview with car IDs
+        layer = self.iface.activeLayer()
+        ite= layer.getFeatures()
+        n = next(ite)
+        n = next(ite)
+        att = n.attributes()
+        x = ','.join([str(y) for y in att])
+
+        car_ids = n['car_id']
+        QgsMessageLog.logMessage(x, 'SnowPlow')
+        QgsMessageLog.logMessage(str(car_ids[0]), 'SnowPlow')
+
 
         # Run the dialog event loop
         result = self.dlg.exec_()

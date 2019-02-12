@@ -99,6 +99,10 @@ def convert_from_best_solution(graph, cars, filename='circuits.geojson'):
             tpl = get_uniq_link(r[0],r[1])
             links[tpl]['properties']['car_id'].append(c['id'])
 
+    # add car_ids as a string, eg. "58,125,168" – necessary for filtering in QGIS
+    for k in links.keys():
+        links[k]['properties']['car_id_str'] = ','.join(map(str, links[k]['properties']['car_id']))
+
     features = [geojson.Feature(geometry=x['geometry'], properties=x['properties']) for x in links.values()]
     feat_coll = geojson.FeatureCollection(features)
 

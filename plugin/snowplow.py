@@ -42,7 +42,6 @@ def qgis_list_to_list(qgis_str):
         to python list
     '''
     # comma delimited list
-    elems_str = qgis_str.split(':')[1].rstrip(')')
     lst = [int(x) for x in elems_str.split(',')]
     return lst
 
@@ -228,7 +227,16 @@ class SnowPlow:
 
     def select_cars(self):
         layer = self.iface.activeLayer()
-        pass
+        items = self.dlg.cars.selectedItems()
+
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        symbol.setColor(QColor(Qt.red))
+
+        renderer = QgsRuleBasedRenderer(symbol)
+        layer.setRenderer(renderer)
+
+        cat = QgsRendererCategory(1, symbol, "1")
+        renderer.addCategory(cat)
 
     def colourize(self):
         pass
@@ -243,7 +251,8 @@ class SnowPlow:
         if self.dlg.colourize.isChecked():
             colourize()
 
-        select_cars()
+        if self.dlf.cars_activate.isChecked():
+            select_cars()
 
 
         ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
@@ -290,14 +299,16 @@ class SnowPlow:
         # fill listview with car IDs
         layer = self.iface.activeLayer()
         car_ids = set()
+        try:
+            for f in layer.getFeatures():
+                for car in qgis_list_to_list(f['car_id_string']):
+                    car_ids.add(car)
 
-        for f in layer.getFeatures():
-            for car in qgis_list_to_list(f['car_id']):
-                car_ids.add(car)
-
-        self.dlg.cars.addItems([str(x) for x in list(car_ids)])
-        QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
-
+            self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+            QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
+        except Exception as e:
+            QgsMessageLog.logMessage('Loaded file does not have attributes for filling up listwidget.', 'SnowPlow')
+            QgsMessageLog.logMessage(e, 'SnowPlow')
 
         # Run the dialog event loop
         result = self.dlg.exec_()

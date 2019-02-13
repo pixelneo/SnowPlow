@@ -47,12 +47,13 @@ def qgis_list_to_list(qgis_str):
 
 class DataHolder:
     def __init__(self):
-        self.colours = ['green', 'red', 'yellow', 'blue']
+        self.colours = [(230, 25, 75), (60, 180, 75), (235, 235, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230)]
+        # self.colours = ['green', 'red', 'yellow', 'blue']
         self.current = 0
 
     def next_colour(self):
         self.current = (self.current + 1) % len(self.colours)
-        return self.colours[self.current]
+        return QColor(*self.colours[self.current])
 
 
 
@@ -241,7 +242,7 @@ class SnowPlow:
         rule = root_rule.children()[0].clone()
         rule.setLabel(label)
         rule.setFilterExpression(expression)
-        rule.symbol().setColor(QColor(color))
+        rule.symbol().setColor(color)
         root_rule.appendChild(rule)
         layer.setRenderer(renderer)
         layer.triggerRepaint()
@@ -251,9 +252,14 @@ class SnowPlow:
         layer = self.iface.activeLayer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
+        selected = []
         for car in self.dlg.cars.selectedItems():
             QgsMessageLog.logMessage(car.text(), 'SnowPlow')
-            self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour()) 
+            selected.append(' \"car_id_str\" NOT LIKE \'% {} %\''.format(str(car.text())))
+            self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour())
+
+        # set the not selected colour
+        self.select_new_car(symbol, renderer, 'Others' ,' AND '.join(selected), QColor(220,220,220))
 
 
 
@@ -293,6 +299,22 @@ class SnowPlow:
         self.iface.mapCanvas().setSelectionColor( QColor("blue") )
         # self.iface.mapCanvas().zoomToSelected()
 
+    def fill_listwidget(self):
+        # fill listview with car IDs
+        layer = self.iface.activeLayer()
+        car_ids = set()
+        try:
+            for f in layer.getFeatures():
+                for car in qgis_list_to_list(f['car_id_str']):
+                    car_ids.add(car)
+
+            self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+            QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
+        except Exception as e:
+            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
+            raise e
+
+
 
     def run(self):
         """Run method that performs all the real work"""
@@ -307,29 +329,11 @@ class SnowPlow:
             apply_button.clicked.connect(self.apply_filter)
             ok_button = self.dlg.buttons.button(QDialogButtonBox.Ok)
             ok_button.clicked.connect(self.apply_filter)
+            # fill list_widget
+            self.fill_listwidget()
 
         # show the dialog
         self.dlg.show()
-        bla = self.dlg.priority1.isChecked()
-        if bla:
-            QgsMessageLog.logMessage('ano', 'SnowPlow')
-        else:
-            QgsMessageLog.logMessage('ne', 'SnowPlow')
-
-        # fill listview with car IDs
-        layer = self.iface.activeLayer()
-        car_ids = set()
-        try:
-            for f in layer.getFeatures():
-                for car in qgis_list_to_list(f['car_id_str']):
-                    car_ids.add(car)
-
-            self.dlg.cars.addItems([str(x) for x in list(car_ids)])
-            QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
-        except Exception as e:
-            QgsMessageLog.logMessage('Loaded file does not have attributes for filling up listwidget.', 'SnowPlow')
-            raise e
-
 
         # Run the dialog event loop
         result = self.dlg.exec_()

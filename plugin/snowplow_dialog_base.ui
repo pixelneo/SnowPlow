@@ -153,20 +153,6 @@
      </widget>
     </item>
     <item>
-     <widget class="QCheckBox" name="colourize">
-      <property name="text">
-       <string>Colourize Circuits</string>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <widget class="Line" name="line_2">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_5">

@@ -47,7 +47,7 @@ def qgis_list_to_list(qgis_str):
 
 class DataHolder:
     def __init__(self):
-        self.colours = [(230, 25, 75), (60, 180, 75), (235, 235, 25), (0, 130, 200), (245, 130, 48), (145, 30, 180), (70, 240, 240), (240, 50, 230)]
+        self.colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220), (0, 130, 200, 220), (245, 130, 48, 220), (145, 30, 180, 220), (70, 220, 220, 220), (220, 50, 210, 220)]
         # self.colours = ['green', 'red', 'yellow', 'blue']
         self.current = 0
 
@@ -236,13 +236,14 @@ class SnowPlow:
 
         return ((priorities, no_priorities), (method, no_method))
 
-    def select_new_car(self, symbol, renderer, label, expression, color):
+    def select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
         layer = self.iface.activeLayer()
         root_rule = renderer.rootRule()
         rule = root_rule.children()[0].clone()
         rule.setLabel(label)
         rule.setFilterExpression(expression)
         rule.symbol().setColor(color)
+        rule.symbol().setWidth(size)
         root_rule.appendChild(rule)
         layer.setRenderer(renderer)
         layer.triggerRepaint()
@@ -253,41 +254,22 @@ class SnowPlow:
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
         selected = []
+        # set the not selected colour
+        renderer.rootRule().children()[0].symbol().setColor(QColor(200,200,200,255))
         for car in self.dlg.cars.selectedItems():
             QgsMessageLog.logMessage(car.text(), 'SnowPlow')
             selected.append(' \"car_id_str\" NOT LIKE \'% {} %\''.format(str(car.text())))
-            self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour())
+            self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour(), 1)
 
-        # set the not selected colour
-        self.select_new_car(symbol, renderer, 'Others' ,' AND '.join(selected), QColor(220,220,220))
 
 
 
     def colourize(self):
         pass
 
-    def apply_filter(self):
-        """Apply selected filtering rules."""
-
-        QgsMessageLog.logMessage('aplied', 'SnowPlow')
-
-        # colourize 
-        # TODO undo
-        if self.dlg.colourize.isChecked():
-            self.colourize()
-
-        if self.dlg.cars_activate.isChecked():
-            self.select_cars()
-
-
+    def set_priorities_and_methods(self):
         ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
         layer = self.iface.activeLayer()
-
-        # Debugging messages
-        x = 'prio: {}'.format(','.join(map(str, priorities)))
-        y = 'noio: {}'.format(','.join(map(str, no_priorities)))
-        QgsMessageLog.logMessage(x, 'SnowPlow')
-        QgsMessageLog.logMessage(y, 'SnowPlow')
 
         deselected = self.get_by_field(no_priorities, layer, 'priority')
         deselected += self.get_by_field(no_method, layer, 'maintenance_method')
@@ -296,8 +278,38 @@ class SnowPlow:
         selected = self.get_by_field(priorities, layer, 'priority')
         selected += self.get_by_field(method, layer, 'maintenance_method')
         layer.select(selected)
-        self.iface.mapCanvas().setSelectionColor( QColor("blue") )
-        # self.iface.mapCanvas().zoomToSelected()
+        self.iface.mapCanvas().setSelectionColor( QColor(0, 0, 128) )
+
+
+    def apply_filter(self):
+        """Apply selected filtering rules."""
+
+        QgsMessageLog.logMessage('aplied', 'SnowPlow')
+
+        if self.dlg.cars_activate.isChecked():
+            self.select_cars()
+
+        self.set_priorities_and_methods()
+
+    def restore(self):
+        self.dlg.priority1.setChecked(False)
+        self.dlg.priority2.setChecked(False)
+        self.dlg.priority3.setChecked(False)
+        self.dlg.salt.setChecked(False)
+        self.dlg.inert.setChecked(False)
+        self.dlg.plow.setChecked(False)
+
+        self.set_priorities_and_methods()
+
+        layer = self.iface.activeLayer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+        # set default color
+        renderer.rootRule().children()[0].symbol().setColor(QColor(200,200,200,255))
+        layer.setRenderer(renderer)
+        layer.triggerRepaint()
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
 
     def fill_listwidget(self):
         # fill listview with car IDs
@@ -329,6 +341,8 @@ class SnowPlow:
             apply_button.clicked.connect(self.apply_filter)
             ok_button = self.dlg.buttons.button(QDialogButtonBox.Ok)
             ok_button.clicked.connect(self.apply_filter)
+            restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
+            restore_button.clicked.connect(self.restore)
             # fill list_widget
             self.fill_listwidget()
 

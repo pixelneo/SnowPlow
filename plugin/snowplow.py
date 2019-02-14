@@ -311,6 +311,10 @@ class SnowPlow:
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
 
+        # deselect items in cars qlistwidget
+        self.dlg.cars.setCurrentItem(None)
+
+
     def fill_listwidget(self):
         # fill listview with car IDs
         layer = self.iface.activeLayer()

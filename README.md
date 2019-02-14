@@ -6,5 +6,5 @@
 ## Plugin 
 - Contains source codes for the plugin to QGIS 3.
 - The plugin can filter files in the format generated the **converter.py**.
-- **Filtering options** are (currently) *type of maintenance* and *priority of maintenance*.
+- **Filtering options** are (currently) *type of maintenance*, *priority of maintenance* and *car maintaining the road*.
 - Plugin can be **downloaded** from the [wiki](https://github.com/pixelneo/SnowPlow/wiki) page.

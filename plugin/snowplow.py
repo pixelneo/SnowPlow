@@ -237,7 +237,6 @@ class SnowPlow:
         return ((priorities, no_priorities), (method, no_method))
 
     def select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
-        layer = self.iface.activeLayer()
         root_rule = renderer.rootRule()
         rule = root_rule.children()[0].clone()
         rule.setLabel(label)
@@ -245,9 +244,6 @@ class SnowPlow:
         rule.symbol().setColor(color)
         rule.symbol().setWidth(size)
         root_rule.appendChild(rule)
-        layer.setRenderer(renderer)
-        layer.triggerRepaint()
-        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
     def select_cars(self):
         layer = self.iface.activeLayer()
@@ -261,6 +257,9 @@ class SnowPlow:
             selected.append(' \"car_id_str\" NOT LIKE \'% {} %\''.format(str(car.text())))
             self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour(), 1)
 
+        layer.setRenderer(renderer)
+        layer.triggerRepaint()
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
 
 
@@ -331,6 +330,32 @@ class SnowPlow:
             raise e
 
 
+    def initial_draw(self):
+        '''
+        Set colour by priority and maintenance_method onload.
+
+        '''
+        def add_category(self):
+            pass
+        layer = self.iface.activeLayer()
+
+        categories = []
+        colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220)]
+
+        for i, colour in enumerate(colours):
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            symbol.setColor(QColor(*colour))
+            category = QgsRendererCategory(i+1, symbol, 'Priority {}'.format(str(i+1)))
+            categories.append(category)
+
+        column = 'priority'
+        # Apply the style rendering
+        renderer = QgsCategorizedSymbolRenderer(column, categories)
+        layer.setRenderer(renderer)
+        # Refresh the layer
+        layer.triggerRepaint()
+
+
 
     def run(self):
         """Run method that performs all the real work"""
@@ -348,7 +373,9 @@ class SnowPlow:
             restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
             restore_button.clicked.connect(self.restore)
             # fill list_widget
-            self.fill_listwidget()
+            # self.fill_listwidget()
+            self.initial_draw()
+                    
 
         # show the dialog
         self.dlg.show()

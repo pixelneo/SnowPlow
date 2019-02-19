@@ -330,32 +330,34 @@ class SnowPlow:
             raise e
 
 
-    def initial_draw(self):
+    def initial_draw(self, colours, column, renderer, size=0.5):
         '''
         Set colour by priority and maintenance_method onload.
 
         '''
-        def add_category(self):
-            pass
+
+        def select_new_priority(symbol, renderer, label, expression, color, size=0.5):
+            root_rule = renderer.rootRule()
+            rule = root_rule.children()[0].clone()
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(color)
+            rule.symbol().setWidth(size)
+            root_rule.appendChild(rule)
+
         layer = self.iface.activeLayer()
-
-        categories = []
-        colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220)]
-
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        selected = []
+        # set the not selected colour
+        renderer.rootRule().children()[0].symbol().setColor(QColor(200,200,200,0))
         for i, colour in enumerate(colours):
-            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-            symbol.setColor(QColor(*colour))
-            category = QgsRendererCategory(i+1, symbol, 'Priority {}'.format(str(i+1)))
-            categories.append(category)
+            QgsMessageLog.logMessage(str(i+1), 'SnowPlow')
+            # selected.append(' \"priority\" NOT LIKE \'% {} %\''.format(str(car.text())))
+            select_new_priority(symbol, renderer, '{} {}'.format(column, str(i+1)), ' \"{}\" LIKE \'%{}%\''.format(column, str(i+1)), QColor(*colour), size)
 
-        column = 'priority'
-        # Apply the style rendering
-        renderer = QgsCategorizedSymbolRenderer(column, categories)
         layer.setRenderer(renderer)
-        # Refresh the layer
         layer.triggerRepaint()
-
-
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
     def run(self):
         """Run method that performs all the real work"""
@@ -374,9 +376,14 @@ class SnowPlow:
             restore_button.clicked.connect(self.restore)
             # fill list_widget
             # self.fill_listwidget()
-            self.initial_draw()
-                    
 
+            layer = self.iface.activeLayer()
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            renderer = QgsRuleBasedRenderer(symbol)
+            colours0 = [ (110, 145, 30, 10),(0, 0, 255, 10), (0, 255, 0, 10)]
+            colours1 = [(230, 25, 75), (60, 180, 75), (225, 225, 25)]
+            self.initial_draw(colours1, 'priority', renderer)
+            self.initial_draw(colours0, 'min_priority', renderer, 2)
         # show the dialog
         self.dlg.show()
 

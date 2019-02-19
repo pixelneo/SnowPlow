@@ -377,13 +377,15 @@ class SnowPlow:
             # fill list_widget
             # self.fill_listwidget()
 
-            layer = self.iface.activeLayer()
-            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-            renderer = QgsRuleBasedRenderer(symbol)
-            colours0 = [ (110, 145, 30, 10),(0, 0, 255, 10), (0, 255, 0, 10)]
-            colours1 = [(230, 25, 75), (60, 180, 75), (225, 225, 25)]
-            self.initial_draw(colours1, 'priority', renderer)
-            self.initial_draw(colours0, 'min_priority', renderer, 2)
+        # set colours
+        layer = self.iface.activeLayer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+        colours0 = [ (110, 145, 30, 10),(0, 0, 255, 10), (0, 255, 0, 10)]
+        colours1 = [(230, 25, 75), (60, 180, 75), (225, 225, 25)]
+        self.initial_draw(colours1, 'priority', renderer)
+        self.initial_draw(colours0, 'min_priority', renderer, 2)
+
         # show the dialog
         self.dlg.show()
 
@@ -392,3 +394,4 @@ class SnowPlow:
         # See if OK was pressed
         if result:
             pass
+        self.close()

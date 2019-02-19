@@ -329,10 +329,41 @@ class SnowPlow:
             iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
             raise e
 
+    def _get_feat_names(self):
+        layer = self.iface.activeLayer()
+        fs = layer.getFeatures()
+        f = next(fs)
+        return set([x.name() for x in f.fields()])
+
+    def fill_rows_and_columns(self):
+        names = self._get_feat_names()
+
+        self.dlg.listRows.addItems([str(x) for x in list(names)])
+        self.dlg.listColumns.addItems([str(x) for x in list(names)])
+        self.dlg.listRows.sortItems()
+        self.dlg.listColumns.sortItems()
+
+
+    def rows_selected(self):
+        names = self._get_feat_names()
+        selected = set([str(n.text()) for n in self.dlg.listRows.selectedItems()])
+
+        self.dlg.listColumns.clear()
+        self.dlg.listColumns.addItems([str(x) for x in list(names.difference(selected))])
+        self.dlg.listColumns.sortItems()
+
+    def columns_selected(self):
+        names = self._get_feat_names()
+        selected = set([str(n.text()) for n in self.dlg.listColumns.selectedItems()])
+
+        self.dlg.listRows.clear()
+        self.dlg.listRows.addItems([str(x) for x in list(names.difference(selected))])
+        self.dlg.listRows.sortItems()
+
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
         '''
-        Set colour by priority and maintenance_method onload.
+        Set colour by priority and maintenance_method 
 
         '''
 
@@ -360,6 +391,10 @@ class SnowPlow:
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
     def initial_draw(self):
+        '''
+            Colours edges by priority and maintenance_method
+            Sets label to curcuits
+        '''
          # set colours
         layer = self.iface.activeLayer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
@@ -371,6 +406,9 @@ class SnowPlow:
         self.set_labels()
 
     def set_labels(self):
+        '''
+            Sets labels to circuits
+        '''
         layer = self.iface.activeLayer()
         tf = QgsTextFormat()
 
@@ -397,12 +435,17 @@ class SnowPlow:
         if self.first_start == True:
             self.first_start = False
             self.dlg = SnowPlowDialog()
-            apply_button = self.dlg.buttons.button(QDialogButtonBox.Apply)
-            apply_button.clicked.connect(self.apply_filter)
-            ok_button = self.dlg.buttons.button(QDialogButtonBox.Ok)
-            ok_button.clicked.connect(self.apply_filter)
-            restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
-            restore_button.clicked.connect(self.restore)
+            # apply_button = self.dlg.buttons.button(QDialogButtonBox.Apply)
+            # apply_button.clicked.connect(self.apply_filter)
+            # ok_button = self.dlg.buttons.button(QDialogButtonBox.Ok)
+            # ok_button.clicked.connect(self.apply_filter)
+            # restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
+            # restore_button.clicked.connect(self.restore)
+
+            self.dlg.listRows.itemSelectionChanged.connect(self.rows_selected)
+            self.dlg.listColumns.itemSelectionChanged.connect(self.columns_selected)
+
+        self.fill_rows_and_columns()
             # fill list_widget
             # self.fill_listwidget()
 
@@ -410,8 +453,9 @@ class SnowPlow:
             self.initial_draw()
         except Exception as e:
             self.iface.messageBar().pushMessage("Error", "Wrong layer is selected.", level=Qgis.Critical)
-       # show the dialog
-        #self.dlg.show()
+        
+        # show the dialog
+        self.dlg.show()
 
         # Run the dialog event loop
         #result = self.dlg.exec_()

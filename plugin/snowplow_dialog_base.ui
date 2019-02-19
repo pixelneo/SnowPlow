@@ -6,36 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>528</width>
-    <height>439</height>
+    <width>721</width>
+    <height>708</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>SnowPlow</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttons">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>400</y>
-     <width>511</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Apply|QDialogButtonBox::Cancel|QDialogButtonBox::Ok|QDialogButtonBox::RestoreDefaults</set>
-   </property>
-  </widget>
   <widget class="QWidget" name="verticalLayoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>511</width>
-     <height>381</height>
+     <width>701</width>
+     <height>681</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -46,50 +30,32 @@
      <number>0</number>
     </property>
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <property name="spacing">
+       <number>12</number>
+      </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetDefaultConstraint</enum>
+      </property>
       <item>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
          <widget class="QLabel" name="label">
           <property name="font">
            <font>
-            <pointsize>15</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
           </property>
           <property name="text">
-           <string>Priority of snow plowing</string>
+           <string>Rows</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="priority1">
-          <property name="text">
-           <string>Priority 1</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="priority2">
-          <property name="text">
-           <string>Priority 2</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="priority3">
-          <property name="text">
-           <string>Priority 3</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
+         <widget class="QListWidget" name="listRows">
+          <property name="selectionMode">
+           <enum>QAbstractItemView::MultiSelection</enum>
           </property>
          </widget>
         </item>
@@ -101,91 +67,17 @@
          <widget class="QLabel" name="label_2">
           <property name="font">
            <font>
-            <pointsize>15</pointsize>
             <weight>75</weight>
             <bold>true</bold>
            </font>
           </property>
           <property name="text">
-           <string>Type of maintenance</string>
+           <string>Columns</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QCheckBox" name="salt">
-          <property name="text">
-           <string>Salt</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="inert">
-          <property name="text">
-           <string>Inert</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="plow">
-          <property name="text">
-           <string>Plow</string>
-          </property>
-          <property name="checked">
-           <bool>false</bool>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <widget class="Line" name="line">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-     </widget>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_2">
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_3">
-          <item>
-           <widget class="QLabel" name="label_3">
-            <property name="font">
-             <font>
-              <pointsize>15</pointsize>
-              <weight>75</weight>
-              <bold>true</bold>
-             </font>
-            </property>
-            <property name="text">
-             <string>Select car circuits</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="cars_activate">
-            <property name="text">
-             <string>activate</string>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </item>
-        <item>
-         <widget class="QListWidget" name="cars">
+         <widget class="QListWidget" name="listColumns">
           <property name="selectionMode">
            <enum>QAbstractItemView::MultiSelection</enum>
           </property>
@@ -195,42 +87,30 @@
       </item>
      </layout>
     </item>
+    <item>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QDialogButtonBox" name="buttonBox">
+        <property name="standardButtons">
+         <set>QDialogButtonBox::Apply|QDialogButtonBox::Reset</set>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QTableWidget" name="tableStats">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>500</height>
+       </size>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
  <resources/>
- <connections>
-  <connection>
-   <sender>buttons</sender>
-   <signal>accepted()</signal>
-   <receiver>SnowPlowDialogBase</receiver>
-   <slot>accept()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttons</sender>
-   <signal>rejected()</signal>
-   <receiver>SnowPlowDialogBase</receiver>
-   <slot>reject()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>20</x>
-     <y>20</y>
-    </hint>
-   </hints>
-  </connection>
- </connections>
+ <connections/>
 </ui>

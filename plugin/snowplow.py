@@ -374,8 +374,8 @@ class SnowPlow:
         layer = self.iface.activeLayer()
         tf = QgsTextFormat()
 
-        tf.setFont(QFont("Arial", 8))
-        tf.setSize(8)
+        tf.setFont(QFont("Arial", 10))
+        tf.setSize(10)
 
         ls  = QgsPalLayerSettings()
         ls.setFormat(tf)

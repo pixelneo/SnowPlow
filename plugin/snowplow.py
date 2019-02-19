@@ -330,7 +330,7 @@ class SnowPlow:
             raise e
 
 
-    def initial_draw(self, colours, column, renderer, size=0.5):
+    def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
         '''
         Set colour by priority and maintenance_method onload.
 
@@ -350,14 +350,43 @@ class SnowPlow:
         selected = []
         # set the not selected colour
         renderer.rootRule().children()[0].symbol().setColor(QColor(200,200,200,0))
-        for i, colour in enumerate(colours):
-            QgsMessageLog.logMessage(str(i+1), 'SnowPlow')
+        for i, colour in zip(options,colours):
+            QgsMessageLog.logMessage(str(i), 'SnowPlow')
             # selected.append(' \"priority\" NOT LIKE \'% {} %\''.format(str(car.text())))
-            select_new_priority(symbol, renderer, '{} {}'.format(column, str(i+1)), ' \"{}\" LIKE \'%{}%\''.format(column, str(i+1)), QColor(*colour), size)
+            select_new_priority(symbol, renderer, '{} {}'.format(column, str(i)), ' \"{}\" LIKE \'%{}%\''.format(column, str(i)), QColor(*colour), size)
 
         layer.setRenderer(renderer)
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
+    def initial_draw(self):
+         # set colours
+        layer = self.iface.activeLayer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        renderer = QgsRuleBasedRenderer(symbol)
+        colour_method = [ (255, 30, 30, 15),(30, 30, 255, 15), (30, 255, 30, 15)]
+        colour_priority = [(230, 25, 75), (0, 0, 255), (50, 170, 65)]
+        self.colour_feature(colour_priority, 'priority', renderer)
+        self.colour_feature(colour_method, 'method', renderer, 2.5, ['sold', 'inert', 'snowplow'])
+        self.set_labels()
+
+    def set_labels(self):
+        layer = self.iface.activeLayer()
+        tf = QgsTextFormat()
+
+        tf.setFont(QFont("Arial", 8))
+        tf.setSize(8)
+
+        ls  = QgsPalLayerSettings()
+        ls.setFormat(tf)
+        ls.fieldName = "maintaining_car"
+        ls.placement = 2
+        ls.enabled = True
+        ls = QgsVectorLayerSimpleLabeling(ls)
+
+        layer.setLabelsEnabled(True)
+        layer.setLabeling(ls)
+        layer.triggerRepaint()
 
     def run(self):
         """Run method that performs all the real work"""
@@ -377,21 +406,15 @@ class SnowPlow:
             # fill list_widget
             # self.fill_listwidget()
 
-        # set colours
-        layer = self.iface.activeLayer()
-        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        renderer = QgsRuleBasedRenderer(symbol)
-        colours0 = [ (110, 145, 30, 10),(0, 0, 255, 10), (0, 255, 0, 10)]
-        colours1 = [(230, 25, 75), (60, 180, 75), (225, 225, 25)]
-        self.initial_draw(colours1, 'priority', renderer)
-        self.initial_draw(colours0, 'min_priority', renderer, 2)
-
-        # show the dialog
-        self.dlg.show()
+        try:
+            self.initial_draw()
+        except Exception as e:
+            self.iface.messageBar().pushMessage("Error", "Wrong layer is selected.", level=Qgis.Critical)
+       # show the dialog
+        #self.dlg.show()
 
         # Run the dialog event loop
-        result = self.dlg.exec_()
+        #result = self.dlg.exec_()
         # See if OK was pressed
-        if result:
-            pass
-        self.close()
+        #if result:
+         #   pass

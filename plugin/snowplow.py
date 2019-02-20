@@ -448,8 +448,9 @@ class SnowPlow:
             Computes statistics.
         '''
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
-        selected_column = [x.text() for x in self.dlg.listColumns.selectedItems()]
+        # selected_column = [x.text() for x in self.dlg.listColumns.selectedItems()]
 
+        
         # get all possible options of each feature in rows
         row_opts = []
         for f in selected_rows:

@@ -448,9 +448,15 @@ class SnowPlow:
             Computes statistics.
         '''
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
-        # selected_column = [x.text() for x in self.dlg.listColumns.selectedItems()]
 
-        
+        names = self._get_feat_names()
+        possible_columns = ['length','transit_length','maintaining_lenght','length_1','length_2','length_3','remaining_capacity', 'maintaining_capacity']
+
+        # all reasonable (numerical, summable) columns which are not in the rows
+        columns = list((set(selected_rows).difference(names)).union(set(possible_columns)))
+
+        column_ids = [names.index(x) for x in columns]
+
         # get all possible options of each feature in rows
         row_opts = []
         for f in selected_rows:
@@ -459,16 +465,17 @@ class SnowPlow:
                 options.add(x[f])
             row_opts.append(list(options))
 
-        rows = [x for x in product(*row_opts)]       # rows = product of selected rows
+        # rows = product of selected rows
+        rows = [x for x in product(*row_opts)]
 
-        # get all possible options of each feature in columns 
-        column_opts = []
-        for f in selected_column:
-            options = set()
-            for x in self.iface.activeLayer():
-                options.add(x[f])
-            column_opts.append(list(options))
-
+        # rows in the resulting table
+        # TODO: this does not work, must be row-wise 
+        # TODO 2: it is, BUT there should be ifs when to sum 
+        table_rows = [[0.0]*len(columns)]*len(rows)
+        for f in self.iface.activeLayer():
+            for i, col in enumerate(columns):
+                
+                table_rows[][i] += float(f[col])
 
 
 

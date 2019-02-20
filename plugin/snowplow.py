@@ -447,6 +447,31 @@ class SnowPlow:
         '''
             Computes statistics.
         '''
+        selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
+        selected_column = [x.text() for x in self.dlg.listColumns.selectedItems()]
+
+        # get all possible options of each feature in rows
+        row_opts = []
+        for f in selected_rows:
+            options = set()
+            for x in self.iface.activeLayer():
+                options.add(x[f])
+            row_opts.append(list(options))
+
+        rows = [x for x in product(*row_opts)]       # rows = product of selected rows
+
+        # get all possible options of each feature in columns 
+        column_opts = []
+        for f in selected_column:
+            options = set()
+            for x in self.iface.activeLayer():
+                options.add(x[f])
+            column_opts.append(list(options))
+
+
+
+
+
         pass
 
     def run(self):

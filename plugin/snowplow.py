@@ -26,7 +26,7 @@ from PyQt5.QtGui import * #QIcon
 from PyQt5.QtWidgets import *#QAction, QDialogButtonBox
 
 from qgis.core import * #QgsMessageLog, QgsExpression, QgsFeatureRequest
-from itertools import compress
+from itertools import compress, product
 
 # Initialize Qt resources from file resources.py
 from .resources import *
@@ -206,37 +206,37 @@ class SnowPlow:
                 action)
             self.iface.removeToolBarIcon(action)
 
-    def get_by_field(self, values, layer, field):
-        '''Returns ids of those items which have given `field` equal to `value`'''
+#     def get_by_field(self, values, layer, field):
+#         '''Returns ids of those items which have given `field` equal to `value`'''
 
-        queries = ['{}=\'{}\''.format(field, x) for x in values]
-        query = ' OR '.join(queries)
-        expr = QgsExpression(query)
-        selection = layer.getFeatures(QgsFeatureRequest(expr))
-        ids = [x.id() for x in selection]
-        return ids
+#         queries = ['{}=\'{}\''.format(field, x) for x in values]
+#         query = ' OR '.join(queries)
+#         expr = QgsExpression(query)
+#         selection = layer.getFeatures(QgsFeatureRequest(expr))
+#         ids = [x.id() for x in selection]
+#         return ids
 
 
-    def get_inputs(self):
-        checked = [
-        self.dlg.priority1.isChecked(),
-        self.dlg.priority2.isChecked(),
-        self.dlg.priority3.isChecked()
-        ]
-        checked2 = [
-        self.dlg.salt.isChecked(),
-        self.dlg.inert.isChecked(),
-        self.dlg.plow.isChecked()
-        ]
-        priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
-        no_priorities = set(range(len(checked)+1)[1:]).difference(set(priorities))          # those indices which are not in `priorities`
+#     def get_inputs(self):
+#         checked = [
+#         self.dlg.priority1.isChecked(),
+#         self.dlg.priority2.isChecked(),
+#         self.dlg.priority3.isChecked()
+#         ]
+#         checked2 = [
+#         self.dlg.salt.isChecked(),
+#         self.dlg.inert.isChecked(),
+#         self.dlg.plow.isChecked()
+#         ]
+#         priorities = [x+1 for x in list(compress(list(range(len(checked))), checked))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
+#         no_priorities = set(range(len(checked)+1)[1:]).difference(set(priorities))          # those indices which are not in `priorities`
 
-        method = [x+1 for x in list(compress(list(range(len(checked2))), checked2))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
-        no_method = set(range(len(method)+1)[1:]).difference(set(method))          # those indices which are not in `priorities`
+#         method = [x+1 for x in list(compress(list(range(len(checked2))), checked2))]      # bool list to indices (from 1) of true values eg. [T, F, T] -> [0,2] 
+#         no_method = set(range(len(method)+1)[1:]).difference(set(method))          # those indices which are not in `priorities`
 
-        return ((priorities, no_priorities), (method, no_method))
+#         return ((priorities, no_priorities), (method, no_method))
 
-    def select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
+    def _select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
         root_rule = renderer.rootRule()
         rule = root_rule.children()[0].clone()
         rule.setLabel(label)
@@ -245,7 +245,7 @@ class SnowPlow:
         rule.symbol().setWidth(size)
         root_rule.appendChild(rule)
 
-    def select_cars(self):
+    def _select_cars(self):
         layer = self.iface.activeLayer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
@@ -255,7 +255,7 @@ class SnowPlow:
         for car in self.dlg.cars.selectedItems():
             QgsMessageLog.logMessage(car.text(), 'SnowPlow')
             selected.append(' \"car_id_str\" NOT LIKE \'% {} %\''.format(str(car.text())))
-            self.select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour(), 1)
+            self._select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour(), 1)
 
         layer.setRenderer(renderer)
         layer.triggerRepaint()
@@ -266,18 +266,18 @@ class SnowPlow:
     def colourize(self):
         pass
 
-    def set_priorities_and_methods(self):
-        ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
-        layer = self.iface.activeLayer()
+#     def set_priorities_and_methods(self):
+#         ((priorities, no_priorities), (method, no_method)) = self.get_inputs()
+#         layer = self.iface.activeLayer()
 
-        deselected = self.get_by_field(no_priorities, layer, 'priority')
-        deselected += self.get_by_field(no_method, layer, 'maintenance_method')
-        layer.deselect(deselected)
+#         deselected = self.get_by_field(no_priorities, layer, 'priority')
+#         deselected += self.get_by_field(no_method, layer, 'maintenance_method')
+#         layer.deselect(deselected)
 
-        selected = self.get_by_field(priorities, layer, 'priority')
-        selected += self.get_by_field(method, layer, 'maintenance_method')
-        layer.select(selected)
-        self.iface.mapCanvas().setSelectionColor( QColor(0, 0, 128) )
+#         selected = self.get_by_field(priorities, layer, 'priority')
+#         selected += self.get_by_field(method, layer, 'maintenance_method')
+#         layer.select(selected)
+#         self.iface.mapCanvas().setSelectionColor( QColor(0, 0, 128) )
 
 
     def apply_filter(self):
@@ -286,7 +286,7 @@ class SnowPlow:
         QgsMessageLog.logMessage('aplied', 'SnowPlow')
 
         if self.dlg.cars_activate.isChecked():
-            self.select_cars()
+            self._select_cars()
 
         self.set_priorities_and_methods()
 
@@ -314,20 +314,20 @@ class SnowPlow:
         self.dlg.cars.setCurrentItem(None)
 
 
-    def fill_listwidget(self):
-        # fill listview with car IDs
-        layer = self.iface.activeLayer()
-        car_ids = set()
-        try:
-            for f in layer.getFeatures():
-                for car in qgis_list_to_list(f['car_id_str']):
-                    car_ids.add(car)
+#     def fill_listwidget(self):
+#         # fill listview with car IDs
+#         layer = self.iface.activeLayer()
+#         car_ids = set()
+#         try:
+#             for f in layer.getFeatures():
+#                 for car in qgis_list_to_list(f['car_id_str']):
+#                     car_ids.add(car)
 
-            self.dlg.cars.addItems([str(x) for x in list(car_ids)])
-            QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
-        except Exception as e:
-            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
-            raise e
+#             self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+#             QgsMessageLog.logMessage(', '.join([str(x) for x in list(car_ids)]), 'SnowPlow')
+#         except Exception as e:
+#             iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
+#             raise e
 
     def _get_feat_names(self):
         layer = self.iface.activeLayer()
@@ -336,6 +336,9 @@ class SnowPlow:
         return set([x.name() for x in f.fields()])
 
     def fill_rows_and_columns(self):
+        '''
+            Fills lists for selection of rows and columns when computing stats.
+        '''
         names = self._get_feat_names()
 
         self.dlg.listRows.addItems([str(x) for x in list(names)])
@@ -345,6 +348,10 @@ class SnowPlow:
 
 
     def rows_selected(self):
+        '''
+            Called when a row is selected.
+            Removes selected row from list of columns.
+        '''
         names = self._get_feat_names()
         selected = set([str(n.text()) for n in self.dlg.listRows.selectedItems()])
 
@@ -353,6 +360,10 @@ class SnowPlow:
         self.dlg.listColumns.sortItems()
 
     def columns_selected(self):
+        '''
+            Called when a column is selected.
+            Removes selected column from list of rows.
+        '''
         names = self._get_feat_names()
         selected = set([str(n.text()) for n in self.dlg.listColumns.selectedItems()])
 
@@ -363,8 +374,8 @@ class SnowPlow:
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
         '''
-        Set colour by priority and maintenance_method 
-
+            Set colour by priority and maintenance_method.
+            Called on `initial_draw`.
         '''
 
         def select_new_priority(symbol, renderer, label, expression, color, size=0.5):
@@ -426,6 +437,18 @@ class SnowPlow:
         layer.setLabeling(ls)
         layer.triggerRepaint()
 
+    def _reset_selection(self):
+        '''
+            Resets selection of columns and rows.
+        '''
+        pass
+
+    def _apply_rows_cols(self):
+        '''
+            Computes statistics.
+        '''
+        pass
+
     def run(self):
         """Run method that performs all the real work"""
         self.data_holder = DataHolder()
@@ -441,18 +464,23 @@ class SnowPlow:
             # ok_button.clicked.connect(self.apply_filter)
             # restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
             # restore_button.clicked.connect(self.restore)
+            apply_row_column = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
+            apply_row_column.clicked.connect(self._apply_rows_cols)
+            reset_row_column_selection = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
+            reset_row_column_selection.clicked.connect(self._reset_selection)
+            self.dlg.refresh.clicked.connect(self.initial_draw)
 
             self.dlg.listRows.itemSelectionChanged.connect(self.rows_selected)
             self.dlg.listColumns.itemSelectionChanged.connect(self.columns_selected)
 
-        self.fill_rows_and_columns()
+            self.fill_rows_and_columns()
             # fill list_widget
             # self.fill_listwidget()
 
-        try:
-            self.initial_draw()
-        except Exception as e:
-            self.iface.messageBar().pushMessage("Error", "Wrong layer is selected.", level=Qgis.Critical)
+            try:
+                self.initial_draw()
+            except Exception as e:
+                self.iface.messageBar().pushMessage("Error", "Wrong layer is selected.", level=Qgis.Critical)
         
         # show the dialog
         self.dlg.show()

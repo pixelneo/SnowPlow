@@ -342,34 +342,34 @@ class SnowPlow:
         names = self._get_feat_names()
 
         self.dlg.listRows.addItems([str(x) for x in list(names)])
-        self.dlg.listColumns.addItems([str(x) for x in list(names)])
+        # self.dlg.listColumns.addItems([str(x) for x in list(names)])
         self.dlg.listRows.sortItems()
-        self.dlg.listColumns.sortItems()
+        # self.dlg.listColumns.sortItems()
 
 
-    def rows_selected(self):
-        '''
-            Called when a row is selected.
-            Removes selected row from list of columns.
-        '''
-        names = self._get_feat_names()
-        selected = set([str(n.text()) for n in self.dlg.listRows.selectedItems()])
+#     def rows_selected(self):
+        # '''
+            # Called when a row is selected.
+            # Removes selected row from list of columns.
+        # '''
+        # names = self._get_feat_names()
+        # selected = set([str(n.text()) for n in self.dlg.listRows.selectedItems()])
 
-        self.dlg.listColumns.clear()
-        self.dlg.listColumns.addItems([str(x) for x in list(names.difference(selected))])
-        self.dlg.listColumns.sortItems()
+        # self.dlg.listColumns.clear()
+        # self.dlg.listColumns.addItems([str(x) for x in list(names.difference(selected))])
+#         self.dlg.listColumns.sortItems()
 
-    def columns_selected(self):
-        '''
-            Called when a column is selected.
-            Removes selected column from list of rows.
-        '''
-        names = self._get_feat_names()
-        selected = set([str(n.text()) for n in self.dlg.listColumns.selectedItems()])
+    # def columns_selected(self):
+    #     '''
+    #         Called when a column is selected.
+    #         Removes selected column from list of rows.
+    #     '''
+    #     names = self._get_feat_names()
+    #     selected = set([str(n.text()) for n in self.dlg.listColumns.selectedItems()])
 
-        self.dlg.listRows.clear()
-        self.dlg.listRows.addItems([str(x) for x in list(names.difference(selected))])
-        self.dlg.listRows.sortItems()
+    #     self.dlg.listRows.clear()
+    #     self.dlg.listRows.addItems([str(x) for x in list(names.difference(selected))])
+    #     self.dlg.listRows.sortItems()
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
@@ -472,7 +472,6 @@ class SnowPlow:
 
 
 
-        pass
 
     def run(self):
         """Run method that performs all the real work"""
@@ -490,13 +489,13 @@ class SnowPlow:
             # restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
             # restore_button.clicked.connect(self.restore)
             apply_row_column = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
-            apply_row_column.clicked.connect(self._apply_rows_cols)
+            # apply_row_column.clicked.connect(self._apply_rows_cols)
             reset_row_column_selection = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
             reset_row_column_selection.clicked.connect(self._reset_selection)
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
-            self.dlg.listRows.itemSelectionChanged.connect(self.rows_selected)
-            self.dlg.listColumns.itemSelectionChanged.connect(self.columns_selected)
+            # self.dlg.listRows.itemSelectionChanged.connect(self.rows_selected)
+            # self.dlg.listColumns.itemSelectionChanged.connect(self.columns_selected)
 
             self.fill_rows_and_columns()
             # fill list_widget

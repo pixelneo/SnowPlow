@@ -468,14 +468,15 @@ class SnowPlow:
         # rows = product of selected rows
         rows = [x for x in product(*row_opts)]
 
-        # rows in the resulting table
-        # TODO: this does not work, must be row-wise 
-        # TODO 2: it is, BUT there should be ifs when to sum 
-        table_rows = [[0.0]*len(columns)]*len(rows)
+        # create dict with keys like '1,salt'
+        table_rows = {}
+        for row in rows:
+            table_rows[','.join([str(i) for i in row])] = [[0.0]*len(columns)]
+
+        # fill the dict  
         for f in self.iface.activeLayer():
             for i, col in enumerate(columns):
-                
-                table_rows[][i] += float(f[col])
+                table_rows[','.join(str(f[x]) for x in selected_rows)][i] += float(f[col])
 
 
 

@@ -464,11 +464,11 @@ class SnowPlow:
         for f in selected_rows:
             options = set()
             for x in layer.getFeatures():
-                options.add(x[f])
+                if x[f]:
+                    options.add(x[f])
             row_opts.append(list(options))
 
         # rows = product of selected rows
-        # TODO contains NULLs, delete them
         rows = [x for x in product(*row_opts)]
 
         # create dict with keys like '1,salt'

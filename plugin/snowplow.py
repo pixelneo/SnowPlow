@@ -444,17 +444,6 @@ class SnowPlow:
         '''
         pass
 
-    def _fill_table(self, layer):
-        for f in layer.getFeatures():
-            for i, col in enumerate(columns):
-                if f[col] != NULL:
-                    QgsMessageLog.logMessage('col: {}'.format(col), 'SnowPlow')
-                    QgsMessageLog.logMessage('fcol: {}'.format(f[col].value()), 'SnowPlow')
-                    QgsMessageLog.logMessage('fprio: {}'.format(f['priority']), 'SnowPlow')
-                    table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
-                else:
-                    QgsMessageLog.logMessage(str(e), 'SnowPlow')
-
     def _apply_rows_cols(self):
         '''
             Computes statistics.
@@ -486,13 +475,22 @@ class SnowPlow:
         # create dict with keys like '1,salt'
         table_rows = {}
         for row in rows:
-            table_rows[','.join([str(i) for i in row])] = [[0.0]*len(columns)]
+            table_rows[','.join([str(i) for i in row])] = [0.0]*len(columns)
 
         # fill the dict  
-        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as e:
-            e.map(self._fill_table, layer) 
+        for f in layer.getFeatures():
+            for i, col in enumerate(columns):
+                if f[col] != NULL:
+                    QgsMessageLog.logMessage('col: {}'.format(col), 'SnowPlow')
+                    QgsMessageLog.logMessage('fcol: {}'.format(f[col]), 'SnowPlow')
+                    QgsMessageLog.logMessage('fprio: {}'.format(f['priority']), 'SnowPlow')
+                    table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
+                    # TODO key error 'sold,NULL'
+                else:
+                    QgsMessageLog.logMessage('ERR', 'SnowPlow')
 
-        
+
+
 
         QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
         QgsMessageLog.logMessage(','.join([str(r) for r in columns]), 'SnowPlow')

@@ -33,7 +33,8 @@ from .resources import *
 # Import the code for the dialog
 from .snowplow_dialog import SnowPlowDialog
 import os.path
-
+import concurrent.futures
+import threading
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -443,6 +444,17 @@ class SnowPlow:
         '''
         pass
 
+    def _fill_table(self, layer):
+        for f in layer.getFeatures():
+            for i, col in enumerate(columns):
+                if f[col] != NULL:
+                    QgsMessageLog.logMessage('col: {}'.format(col), 'SnowPlow')
+                    QgsMessageLog.logMessage('fcol: {}'.format(f[col].value()), 'SnowPlow')
+                    QgsMessageLog.logMessage('fprio: {}'.format(f['priority']), 'SnowPlow')
+                    table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
+                else:
+                    QgsMessageLog.logMessage(str(e), 'SnowPlow')
+
     def _apply_rows_cols(self):
         '''
             Computes statistics.
@@ -455,7 +467,7 @@ class SnowPlow:
 
         # all reasonable (numerical, summable) columns which are not in the rows
         # TODO not working
-        columns = list((set(selected_rows).difference(names)).intersection(set(possible_columns)))
+        columns = list((set(names).difference(selected_rows)).intersection(set(possible_columns)))
 
         # column_ids = [list(names).index(x) for x in columns]
 
@@ -477,11 +489,10 @@ class SnowPlow:
             table_rows[','.join([str(i) for i in row])] = [[0.0]*len(columns)]
 
         # fill the dict  
-        for f in layer.getFeatures():
-            for i, col in enumerate(columns):
-                table_rows[','.join(str(f[x]) for x in selected_rows)][i] += f[col].toFloat()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as e:
+            e.map(self._fill_table, layer) 
 
-
+        
 
         QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
         QgsMessageLog.logMessage(','.join([str(r) for r in columns]), 'SnowPlow')

@@ -447,25 +447,28 @@ class SnowPlow:
         '''
             Computes statistics.
         '''
+        layer = self.iface.activeLayer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
 
         names = self._get_feat_names()
         possible_columns = ['length','transit_length','maintaining_lenght','length_1','length_2','length_3','remaining_capacity', 'maintaining_capacity']
 
         # all reasonable (numerical, summable) columns which are not in the rows
-        columns = list((set(selected_rows).difference(names)).union(set(possible_columns)))
+        # TODO not working
+        columns = list((set(selected_rows).difference(names)).intersection(set(possible_columns)))
 
-        column_ids = [names.index(x) for x in columns]
+        # column_ids = [list(names).index(x) for x in columns]
 
         # get all possible options of each feature in rows
         row_opts = []
         for f in selected_rows:
             options = set()
-            for x in self.iface.activeLayer():
+            for x in layer.getFeatures():
                 options.add(x[f])
             row_opts.append(list(options))
 
         # rows = product of selected rows
+        # TODO contains NULLs, delete them
         rows = [x for x in product(*row_opts)]
 
         # create dict with keys like '1,salt'
@@ -474,12 +477,14 @@ class SnowPlow:
             table_rows[','.join([str(i) for i in row])] = [[0.0]*len(columns)]
 
         # fill the dict  
-        for f in self.iface.activeLayer():
+        for f in layer.getFeatures():
             for i, col in enumerate(columns):
-                table_rows[','.join(str(f[x]) for x in selected_rows)][i] += float(f[col])
+                table_rows[','.join(str(f[x]) for x in selected_rows)][i] += f[col].toFloat()
 
 
 
+        QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
+        QgsMessageLog.logMessage(','.join([str(r) for r in columns]), 'SnowPlow')
 
 
     def run(self):
@@ -498,7 +503,7 @@ class SnowPlow:
             # restore_button = self.dlg.buttons.button(QDialogButtonBox.RestoreDefaults)
             # restore_button.clicked.connect(self.restore)
             apply_row_column = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
-            # apply_row_column.clicked.connect(self._apply_rows_cols)
+            apply_row_column.clicked.connect(self._apply_rows_cols)
             reset_row_column_selection = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
             reset_row_column_selection.clicked.connect(self._reset_selection)
             self.dlg.refresh.clicked.connect(self.initial_draw)

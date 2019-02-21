@@ -477,6 +477,11 @@ class SnowPlow:
         for row in rows:
             table_rows[','.join([str(i) for i in row])] = [0.0]*len(columns)
 
+        self.dlg.tableStats.setRowCount(len(rows))
+        self.dlg.tableStats.setColumnCount(len(columns))
+        self.dlg.tableStats.setHorizontalHeaderLabels(columns)
+        self.dlg.tableStats.setVerticalHeaderLabels([str(x) for x in rows])
+
         # fill the dict  
         for f in layer.getFeatures():
             for i, col in enumerate(columns):
@@ -484,10 +489,20 @@ class SnowPlow:
                     QgsMessageLog.logMessage('col: {}'.format(col), 'SnowPlow')
                     QgsMessageLog.logMessage('fcol: {}'.format(f[col]), 'SnowPlow')
                     QgsMessageLog.logMessage('fprio: {}'.format(f['priority']), 'SnowPlow')
-                    table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
+                    try:
+                        table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
+                    except KeyError as ke:
+                        QgsMessageLog.logMessage(str(ke), 'SnowPlow')
+
                     # TODO key error 'sold,NULL'
                 else:
                     QgsMessageLog.logMessage('ERR', 'SnowPlow')
+
+        
+        for i,k in enumerate(table_rows.keys()):
+            for j,v in enumerate(table_rows[k]):
+                self.dlg.tableStats.setItem(i,j,QTableWidgetItem(str(v)))
+
 
 
 

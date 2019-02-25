@@ -35,7 +35,6 @@ from .snowplow_dialog import SnowPlowDialog
 import os.path
 import concurrent.futures
 import threading
-from multiprocessing.dummy import Pool as ThreadPool 
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -367,22 +366,20 @@ class SnowPlow:
         self.dlg.tableStats.setRowCount(len(rows))
         self.dlg.tableStats.setColumnCount(len(columns))
         self.dlg.tableStats.setHorizontalHeaderLabels(columns)
-        self.dlg.tableStats.setVerticalHeaderLabels([str(x) for x in rows])
-
+        self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         # fill the dict  
         for f in layer.getFeatures():
             for i, col in enumerate(columns):
                 if f[col] != NULL:
-                    QgsMessageLog.logMessage('col: {}'.format(col), 'SnowPlow')
-                    QgsMessageLog.logMessage('fcol: {}'.format(f[col]), 'SnowPlow')
-                    QgsMessageLog.logMessage('fprio: {}'.format(f['priority']), 'SnowPlow')
                     try:
                         table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
                     except KeyError as ke:
-                        QgsMessageLog.logMessage(str(ke), 'SnowPlow')
+                        QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
 
-                    # TODO key error 'sold,NULL'
-                    QgsMessageLog.logMessage('ERR', 'SnowPlow')
+                else:
+                    QgsMessageLog.logMessage('fcol je NULL warning', 'SnowPlow')
+
+
 
         for i,k in enumerate(table_rows.keys()):
             for j,v in enumerate(table_rows[k]):

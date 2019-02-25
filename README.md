@@ -1,6 +1,6 @@
 # SnowPlow
 
-[[https://github.com/pixelneo/SnowPlow/wiki/screen2.png]]
+[screen](https://github.com/pixelneo/SnowPlow/wiki/screen2.png)
 
 ## Plugin 
 - Contains source codes for the plugin to QGIS 3.

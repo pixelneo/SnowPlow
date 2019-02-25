@@ -1,10 +1,7 @@
 # SnowPlow
 
-## Converter
-- Converts data in json format (such as the *processed.geojson*) to valid geojson file.
-
 ## Plugin 
 - Contains source codes for the plugin to QGIS 3.
-- The plugin can filter files in the format generated the **converter.py**.
-- **Filtering options** are (currently) *type of maintenance*, *priority of maintenance* and *car maintaining the road*.
+- On the start of the plugin roads are highlighted according to their **priority** and maintenance **method**.
+- Plugin can show statistics of the data, for any combination of columns it sums the remaining columns (if it makes sense). 
 - Plugin can be **downloaded** from the [wiki](https://github.com/pixelneo/SnowPlow/wiki) page.

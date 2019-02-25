@@ -1,5 +1,7 @@
 # SnowPlow
 
+[[https://github.com/pixelneo/SnowPlow/wiki/screen2.png]]
+
 ## Plugin 
 - Contains source codes for the plugin to QGIS 3.
 - On the start of the plugin roads are highlighted according to their **priority** and maintenance **method**.

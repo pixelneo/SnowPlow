@@ -55,8 +55,12 @@ Also it provides the user with statistics of the data.
     \item On the right there will be settings – layer select, columns select for stats, function (sum, avg, ...) to apply on the remaining columns.
     \item The function could be different for every column.
     \item Button to invoke colourization and labeling. Resets current colourization and makes new one for selected layer.
-    \item Highlighting all transfers of selection of cars – roads, which is not maintained by the given car. (note: this will be done by event onClick on given car in listwidget)
+    \item Highlighting all transits of selection of cars – roads, which is not maintained by the given car. 
+        \emph{note} This will be done by event onClick on given car in listwidget or writing the car ID)
+        Deleting can be done by clicking on a car in a listwidget of selected cars.
+        Each transit can have symbol denoting the transiting car.
     \item Plugin should distinguish data types of layers, ie. not summing over textual data. Also is should advise the user not to select columns with high number of disctinct values, eg. float type.
+        
 
 \end{itemize}
 

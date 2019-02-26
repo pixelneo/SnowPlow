@@ -1,0 +1,50 @@
+\documentclass[12pt,a4paper]{article}
+\setlength\textwidth{145mm}
+\setlength\textheight{247mm}
+
+\usepackage[a-2u]{pdfx}
+
+%% Character encoding: usually latin2, cp1250 or utf8:
+\usepackage[utf8]{inputenc}
+
+%% Prefer Latin Modern fonts
+\usepackage{lmodern}
+
+%% Further useful packages (included in most LaTeX distributions)
+\usepackage{amsmath}        % extensions for typesetting of math
+\usepackage{amsfonts}       % math fonts
+\usepackage{amsthm}         % theorems, definitions, etc.
+\usepackage{bbding}         % various symbols (squares, asterisks, scissors, ...)
+\usepackage{bm}             % boldface symbols (\bm)
+\usepackage{graphicx}       % embedding of pictures
+\usepackage{fancyvrb}       % improved verbatim environment
+%\usepackage{natbib}         % citation style AUTHOR (YEAR), or AUTHOR [NUMBER]
+\usepackage[style=ieee]{biblatex}
+\usepackage[nottoc]{tocbibind} % makes sure that bibliography and the lists
+\usepackage{dcolumn}        % improved alignment of table columns
+\usepackage{booktabs}       % improved horizontal lines in tables
+\usepackage{paralist}       % improved enumerate and itemize
+\usepackage[usenames]{xcolor}  % typesetting in color
+\usepackage{float}          % putting images at desired place
+
+\hypersetup{unicode}
+\hypersetup{breaklinks=true}
+\DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small, frame=single}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\begin{document}
+\title{SnowPlow – specification}
+\author{Ondřej Měkota}
+
+\maketitle
+\pagebreak
+%\tableofcontents
+%\pagebreak
+\section{Introduction}
+
+\par This program is a plugin to program \href{https://qgis.org/en/site/index.html}{QGIS 3.4}. 
+Its main function is ease the usage of QGIS with certain types of maps.
+Firstly it colours edges according to specified rules.
+Also it provides the user with statistics of the data.
+
+\end{document}

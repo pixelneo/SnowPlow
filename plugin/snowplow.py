@@ -208,6 +208,13 @@ class SnowPlow:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def get_layer(self):
+        layer = QgsProject.instance().mapLayer(self.dlg.layer_sel.currentData())
+        if not layer:
+            self.iface.messageBar().pushMessage("Error", "No layer is selected.", level=Qgis.Critical)
+        else:
+            return layer
+
     def _select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
         root_rule = renderer.rootRule()
         rule = root_rule.children()[0].clone()
@@ -280,11 +287,9 @@ class SnowPlow:
         layer_list = QgsProject.instance().layerTreeRoot().children() 
         layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
         for i, layer in enumerate(layers):
-            item = QStandardItem('1. {}'.format(layer.name()))
+            item = QStandardItem('{}. {}'.format(i, layer.name()))
             self.dlg.layer_sel.model().appendRow(item)
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
-        # self.dlg.layer_sel.addItems(layer_names)
-        QgsMessageLog.logMessage(self.dlg.layer_sel.currentData(), 'SnowPlow')
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):

@@ -430,6 +430,7 @@ class SnowPlow:
         if self.first_start == True:
             self.first_start = False
             self.dlg = SnowPlowDialog()
+            self.fill_layers()
             apply_row_column = self.dlg.row_sel_buttons.button(QDialogButtonBox.Apply)
             apply_row_column.clicked.connect(self._apply_rows_cols)
             reset_row_column_selection = self.dlg.row_sel_buttons.button(QDialogButtonBox.Reset)
@@ -445,7 +446,6 @@ class SnowPlow:
 
             self.fill_rows_and_columns()
             self.fill_cars()
-            self.fill_layers()
 
             try:
                 self.initial_draw()

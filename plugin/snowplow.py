@@ -284,6 +284,7 @@ class SnowPlow:
             self.dlg.layer_sel.model().appendRow(item)
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
         # self.dlg.layer_sel.addItems(layer_names)
+        QgsMessageLog.logMessage(self.dlg.layer_sel.currentData(), 'SnowPlow')
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):

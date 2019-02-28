@@ -271,9 +271,6 @@ class SnowPlow:
 
             car_ids = sorted(car_ids)
             self.dlg.cars.addItems([str(x) for x in list(car_ids)])
-        except Exception as e:
-            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
-            raise e
     def fill_rows_and_columns(self):
         '''
             Fills lists for selection of rows and columns when computing stats.
@@ -369,6 +366,10 @@ class SnowPlow:
         '''
             Computes statistics.
         '''
+
+        # TODO get columns and their types, do not filter by floats, do no summarize strings, nulls, ..
+
+
         layer = self.get_layer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
 
@@ -447,10 +448,7 @@ class SnowPlow:
             self.fill_rows_and_columns()
             self.fill_cars()
 
-            try:
-                self.initial_draw()
-            except Exception as e:
-                self.iface.messageBar().pushMessage("Error", "Wrong layer is selected.", level=Qgis.Critical)
+            self.initial_draw()
 
         # show the dialog
         self.dlg.show()

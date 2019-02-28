@@ -225,7 +225,7 @@ class SnowPlow:
         root_rule.appendChild(rule)
 
     def _select_cars(self):
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
         selected = []
@@ -255,14 +255,14 @@ class SnowPlow:
         self.set_priorities_and_methods()
 
     def _get_feat_names(self):
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         fs = layer.getFeatures()
         f = next(fs)
         return set([x.name() for x in f.fields()])
 
     def fill_cars(self):
         # fill listview with car IDs
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         car_ids = set()
         try:
             for f in layer.getFeatures():
@@ -307,7 +307,7 @@ class SnowPlow:
             rule.symbol().setWidth(size)
             root_rule.appendChild(rule)
 
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         selected = []
         # set the not selected colour
@@ -327,7 +327,7 @@ class SnowPlow:
             Sets label to curcuits
         '''
          # set colours
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
         colour_method = [ (255, 30, 30, 15),(30, 30, 255, 15), (30, 255, 30, 15)]
@@ -340,7 +340,7 @@ class SnowPlow:
         '''
             Sets labels to circuits
         '''
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         tf = QgsTextFormat()
 
         tf.setFont(QFont("Arial", 10))
@@ -369,7 +369,7 @@ class SnowPlow:
         '''
             Computes statistics.
         '''
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
 
         names = self._get_feat_names()

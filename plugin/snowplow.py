@@ -35,6 +35,7 @@ from .snowplow_dialog import SnowPlowDialog
 import os.path
 import concurrent.futures
 import threading
+from functools import partial
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -252,6 +253,20 @@ class SnowPlow:
         f = next(fs)
         return set([x.name() for x in f.fields()])
 
+    def fill_cars(self):
+        # fill listview with car IDs
+        layer = self.iface.activeLayer()
+        car_ids = set()
+        try:
+            for f in layer.getFeatures():
+                if 'car' in f['id']:
+                    car_ids.add(f['id'])
+
+            car_ids = sorted(car_ids)
+            self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+        except Exception as e:
+            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
+            raise e
     def fill_rows_and_columns(self):
         '''
             Fills lists for selection of rows and columns when computing stats.
@@ -260,6 +275,15 @@ class SnowPlow:
 
         self.dlg.listRows.addItems([str(x) for x in list(names)])
         self.dlg.listRows.sortItems()
+
+    def fill_layers(self):
+        layer_list = QgsProject.instance().layerTreeRoot().children() 
+        layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
+        for i, layer in enumerate(layers):
+            item = QStandardItem('1. {}'.format(layer.name()))
+            self.dlg.layer_sel.model().appendRow(item)
+            self.dlg.layer_sel.setItemData(i, str(layer.id()))
+        # self.dlg.layer_sel.addItems(layer_names)
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
@@ -327,12 +351,14 @@ class SnowPlow:
         layer.setLabeling(ls)
         layer.triggerRepaint()
 
-    def _reset_selection(self):
+    def _reset_selection(self, obj):
         '''
             Resets selection of columns and rows.
         '''
-        pass
+        obj.clearSelection()
 
+    def _apply_transit(self):
+        pass
     def _apply_rows_cols(self):
         '''
             Computes statistics.
@@ -398,14 +424,22 @@ class SnowPlow:
         if self.first_start == True:
             self.first_start = False
             self.dlg = SnowPlowDialog()
-            apply_row_column = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
+            apply_row_column = self.dlg.row_sel_buttons.button(QDialogButtonBox.Apply)
             apply_row_column.clicked.connect(self._apply_rows_cols)
-            reset_row_column_selection = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
-            reset_row_column_selection.clicked.connect(self._reset_selection)
+            reset_row_column_selection = self.dlg.row_sel_buttons.button(QDialogButtonBox.Reset)
+            reset_row_column_selection.clicked.connect(partial(self._reset_selection, self.dlg.listRows))
+
+            apply_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Apply)
+            apply_transit.clicked.connect(self._apply_transit)
+            reset_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Reset)
+            reset_transit.clicked.connect(partial(self._reset_selection, self.dlg.cars))
+
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
 
             self.fill_rows_and_columns()
+            self.fill_cars()
+            self.fill_layers()
 
             try:
                 self.initial_draw()

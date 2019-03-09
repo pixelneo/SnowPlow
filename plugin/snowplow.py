@@ -380,7 +380,6 @@ class SnowPlow:
 
         names_col = self._get_feat_names()
         names = [x[0] for x in names_col]
-        possible_columns = ['length','transit_length','maintaining_lenght','length_1','length_2','length_3','remaining_capacity', 'maintaining_capacity']
 
         # all reasonable (numerical, summable) columns which are not in the rows
         columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real'] and x[0] not in selected_rows]
@@ -404,8 +403,6 @@ class SnowPlow:
             table_rows[','.join([str(i) for i in row])] = [0.0]*len(columns)
 
         self.dlg.tableStats.setRowCount(len(rows))
-        self.dlg.tableStats.setColumnCount(len(columns))
-        self.dlg.tableStats.setHorizontalHeaderLabels(columns)
         self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         # fill the dict  
         for f in layer.getFeatures():
@@ -414,20 +411,36 @@ class SnowPlow:
                     try:
                         table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
                     except KeyError as ke:
-                        QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
-                        QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
-
-                else:
-                    QgsMessageLog.logMessage('fcol je NULL warning', 'SnowPlow')
+                        pass
+                        # QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
+                        # QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
 
+
+        use_cols = []
+        use_col_ind = []
+        for col in range(len(columns)):
+            null = True
+            for k in table_rows.keys():
+                if float(table_rows[k][col]) != 0.0: 
+                    null = False
+                    break
+            if not null:
+                use_cols.append(columns[col])
+                use_col_ind.append(col)
+
+        self.dlg.tableStats.setColumnCount(len(use_cols))
+        self.dlg.tableStats.setHorizontalHeaderLabels(use_cols)
 
         for i,k in enumerate(table_rows.keys()):
-            for j,v in enumerate(table_rows[k]):
-                self.dlg.tableStats.setItem(i,j,QTableWidgetItem(str(v)))
+            for tab_j,col in enumerate(use_col_ind):
+                j = col
+                v = table_rows[k][j]
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, QVariant(str(v)))
+                self.dlg.tableStats.setItem(i,tab_j,item)
 
-        QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
-        QgsMessageLog.logMessage(','.join([str(r) for r in columns]), 'SnowPlow')
+        # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
 
 
     def run(self):

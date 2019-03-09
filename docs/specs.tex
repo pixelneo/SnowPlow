@@ -37,7 +37,7 @@
 \author{Ondřej Měkota}
 
 \maketitle
-\pagebreak
+%\pagebreak
 %\tableofcontents
 %\pagebreak
 \section{Introduction}
@@ -51,15 +51,15 @@ Also it provides the user with statistics of the data.
 \section{Basic specification}
 \begin{itemize}
     \item Selection of layer to which the plugin will be applied.
-    \item Make it horizontally layed out.
-    \item On the right there will be settings – layer select, columns select for stats, function (sum, avg, ...) to apply on the remaining columns.
-    \item The function could be different for every column.
+    \item On the left there will be settings – layer selection, row selection for the statistics, function (sum, avg, max, min, median,  ...) to apply on the remaining columns.
+    \item The function can be different for every column.
     \item Button to invoke colourization and labeling. Resets current colourization and makes new one for selected layer.
-    \item Highlighting all transits of selection of cars – roads, which is not maintained by the given car. 
-        \emph{note} This will be done by event onClick on given car in listwidget or writing the car ID)
-        Deleting can be done by clicking on a car in a listwidget of selected cars.
-        Each transit can have symbol denoting the transiting car.
-    \item Plugin should distinguish data types of layers, ie. not summing over textual data. Also is should advise the user not to select columns with high number of disctinct values, eg. float type.
+    \item Highlighting all transits of selection of cars – roads, which are not maintained by the given cars but the cars use them for transport. 
+        %\emph{note} This will be done by event onClick on given car in listwidget or writing the car ID)
+        %Deleting can be done by clicking on a car in a listwidget of selected cars.
+        %Each transit can have symbol denoting the transiting car.
+    \item Plugin will distinguish data types of layers, ie. not summing over textual data. Also is should advise the user not to select columns with high number of disctinct values, eg. float type.
+    %\item \emph{Maybe}, use multithreading for computing statistics.
         
 
 \end{itemize}

@@ -35,6 +35,7 @@ from .snowplow_dialog import SnowPlowDialog
 import os.path
 import concurrent.futures
 import threading
+from functools import partial
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -207,6 +208,13 @@ class SnowPlow:
                 action)
             self.iface.removeToolBarIcon(action)
 
+    def get_layer(self):
+        layer = QgsProject.instance().mapLayer(self.dlg.layer_sel.currentData())
+        if not layer:
+            self.iface.messageBar().pushMessage("Error", "No layer is selected.", level=Qgis.Critical)
+        else:
+            return layer
+
     def _select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
         root_rule = renderer.rootRule()
         rule = root_rule.children()[0].clone()
@@ -217,7 +225,7 @@ class SnowPlow:
         root_rule.appendChild(rule)
 
     def _select_cars(self):
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
         selected = []
@@ -239,27 +247,51 @@ class SnowPlow:
     def apply_filter(self):
         """Apply selected filtering rules."""
 
-        QgsMessageLog.logMessage('aplied', 'SnowPlow')
-
         if self.dlg.cars_activate.isChecked():
             self._select_cars()
 
         self.set_priorities_and_methods()
 
     def _get_feat_names(self):
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         fs = layer.getFeatures()
         f = next(fs)
-        return set([x.name() for x in f.fields()])
+        return set([(x.name(), x.typeName()) for x in f.fields()])
+
+    def fill_cars(self):
+        # fill listview with car IDs
+        layer = self.get_layer()
+        car_ids = set()
+        try:
+            for f in layer.getFeatures():
+                if 'car' in f['id']:
+                    car_ids.add(f['id'])
+
+            car_ids = sorted(car_ids)
+            self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+        except Exception as e:
+            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
+            raise e
 
     def fill_rows_and_columns(self):
         '''
             Fills lists for selection of rows and columns when computing stats.
         '''
         names = self._get_feat_names()
+        for i in list(names):
+            QgsMessageLog.logMessage(i[1], 'SnowPlow')
 
-        self.dlg.listRows.addItems([str(x) for x in list(names)])
+
+        self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
         self.dlg.listRows.sortItems()
+
+    def fill_layers(self):
+        layer_list = QgsProject.instance().layerTreeRoot().children() 
+        layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
+        for i, layer in enumerate(layers):
+            item = QStandardItem('{}. {}'.format(i, layer.name()))
+            self.dlg.layer_sel.model().appendRow(item)
+            self.dlg.layer_sel.setItemData(i, str(layer.id()))
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
@@ -277,7 +309,7 @@ class SnowPlow:
             rule.symbol().setWidth(size)
             root_rule.appendChild(rule)
 
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         selected = []
         # set the not selected colour
@@ -297,7 +329,7 @@ class SnowPlow:
             Sets label to curcuits
         '''
          # set colours
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         renderer = QgsRuleBasedRenderer(symbol)
         colour_method = [ (255, 30, 30, 15),(30, 30, 255, 15), (30, 255, 30, 15)]
@@ -310,7 +342,7 @@ class SnowPlow:
         '''
             Sets labels to circuits
         '''
-        layer = self.iface.activeLayer()
+        layer = self.get_layer()
         tf = QgsTextFormat()
 
         tf.setFont(QFont("Arial", 10))
@@ -327,24 +359,31 @@ class SnowPlow:
         layer.setLabeling(ls)
         layer.triggerRepaint()
 
-    def _reset_selection(self):
+    def _reset_selection(self, obj):
         '''
             Resets selection of columns and rows.
         '''
-        pass
+        obj.clearSelection()
 
+    def _apply_transit(self):
+        pass
     def _apply_rows_cols(self):
         '''
             Computes statistics.
         '''
-        layer = self.iface.activeLayer()
+
+        # TODO get columns and their types, do not filter by floats, do no summarize strings, nulls, ..
+
+
+        layer = self.get_layer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
 
-        names = self._get_feat_names()
-        possible_columns = ['length','transit_length','maintaining_lenght','length_1','length_2','length_3','remaining_capacity', 'maintaining_capacity']
+        names_col = self._get_feat_names()
+        names = [x[0] for x in names_col]
 
         # all reasonable (numerical, summable) columns which are not in the rows
-        columns = list((set(names).difference(selected_rows)).intersection(set(possible_columns)))
+        columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real'] and x[0] not in selected_rows]
+        # columns = list((set(names).difference(selected_rows)).intersection(set(possible_columns)))
 
         # get all possible options of each feature in rows
         row_opts = []
@@ -364,8 +403,6 @@ class SnowPlow:
             table_rows[','.join([str(i) for i in row])] = [0.0]*len(columns)
 
         self.dlg.tableStats.setRowCount(len(rows))
-        self.dlg.tableStats.setColumnCount(len(columns))
-        self.dlg.tableStats.setHorizontalHeaderLabels(columns)
         self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         # fill the dict  
         for f in layer.getFeatures():
@@ -374,19 +411,36 @@ class SnowPlow:
                     try:
                         table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
                     except KeyError as ke:
-                        QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
+                        pass
+                        # QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
+                        # QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
-                else:
-                    QgsMessageLog.logMessage('fcol je NULL warning', 'SnowPlow')
 
 
+        use_cols = []
+        use_col_ind = []
+        for col in range(len(columns)):
+            null = True
+            for k in table_rows.keys():
+                if float(table_rows[k][col]) != 0.0: 
+                    null = False
+                    break
+            if not null:
+                use_cols.append(columns[col])
+                use_col_ind.append(col)
+
+        self.dlg.tableStats.setColumnCount(len(use_cols))
+        self.dlg.tableStats.setHorizontalHeaderLabels(use_cols)
 
         for i,k in enumerate(table_rows.keys()):
-            for j,v in enumerate(table_rows[k]):
-                self.dlg.tableStats.setItem(i,j,QTableWidgetItem(str(v)))
+            for tab_j,col in enumerate(use_col_ind):
+                j = col
+                v = table_rows[k][j]
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, QVariant(str(v)))
+                self.dlg.tableStats.setItem(i,tab_j,item)
 
-        QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
-        QgsMessageLog.logMessage(','.join([str(r) for r in columns]), 'SnowPlow')
+        # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
 
 
     def run(self):
@@ -398,19 +452,24 @@ class SnowPlow:
         if self.first_start == True:
             self.first_start = False
             self.dlg = SnowPlowDialog()
-            apply_row_column = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
+            self.fill_layers()
+            apply_row_column = self.dlg.row_sel_buttons.button(QDialogButtonBox.Apply)
             apply_row_column.clicked.connect(self._apply_rows_cols)
-            reset_row_column_selection = self.dlg.statsButtons.button(QDialogButtonBox.Apply)
-            reset_row_column_selection.clicked.connect(self._reset_selection)
+            reset_row_column_selection = self.dlg.row_sel_buttons.button(QDialogButtonBox.Reset)
+            reset_row_column_selection.clicked.connect(partial(self._reset_selection, self.dlg.listRows))
+
+            apply_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Apply)
+            apply_transit.clicked.connect(self._apply_transit)
+            reset_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Reset)
+            reset_transit.clicked.connect(partial(self._reset_selection, self.dlg.cars))
+
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
 
             self.fill_rows_and_columns()
+            self.fill_cars()
 
-            try:
-                self.initial_draw()
-            except Exception as e:
-                self.iface.messageBar().pushMessage("Error", "Wrong layer is selected.", level=Qgis.Critical)
+            self.initial_draw()
 
         # show the dialog
         self.dlg.show()

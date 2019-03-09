@@ -247,8 +247,6 @@ class SnowPlow:
     def apply_filter(self):
         """Apply selected filtering rules."""
 
-        QgsMessageLog.logMessage('aplied', 'SnowPlow')
-
         if self.dlg.cars_activate.isChecked():
             self._select_cars()
 
@@ -258,7 +256,7 @@ class SnowPlow:
         layer = self.get_layer()
         fs = layer.getFeatures()
         f = next(fs)
-        return set([x.name() for x in f.fields()])
+        return set([(x.name(), x.typeName()) for x in f.fields()])
 
     def fill_cars(self):
         # fill listview with car IDs
@@ -271,13 +269,20 @@ class SnowPlow:
 
             car_ids = sorted(car_ids)
             self.dlg.cars.addItems([str(x) for x in list(car_ids)])
+        except Exception as e:
+            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
+            raise e
+
     def fill_rows_and_columns(self):
         '''
             Fills lists for selection of rows and columns when computing stats.
         '''
         names = self._get_feat_names()
+        for i in list(names):
+            QgsMessageLog.logMessage(i[1], 'SnowPlow')
 
-        self.dlg.listRows.addItems([str(x) for x in list(names)])
+
+        self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
         self.dlg.listRows.sortItems()
 
     def fill_layers(self):
@@ -373,11 +378,13 @@ class SnowPlow:
         layer = self.get_layer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
 
-        names = self._get_feat_names()
+        names_col = self._get_feat_names()
+        names = [x[0] for x in names_col]
         possible_columns = ['length','transit_length','maintaining_lenght','length_1','length_2','length_3','remaining_capacity', 'maintaining_capacity']
 
         # all reasonable (numerical, summable) columns which are not in the rows
-        columns = list((set(names).difference(selected_rows)).intersection(set(possible_columns)))
+        columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real'] and x[0] not in selected_rows]
+        # columns = list((set(names).difference(selected_rows)).intersection(set(possible_columns)))
 
         # get all possible options of each feature in rows
         row_opts = []
@@ -408,6 +415,7 @@ class SnowPlow:
                         table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
                     except KeyError as ke:
                         QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
+                        QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
                 else:
                     QgsMessageLog.logMessage('fcol je NULL warning', 'SnowPlow')

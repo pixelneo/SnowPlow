@@ -486,16 +486,20 @@ class SnowPlow:
 
 
 
-        # self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys() if use_row[x]]))
-        self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys()]))
-        # self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]])
-        self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
+        QgsMessageLog.logMessage(str(use_row), 'SnowPlow')
+        self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys() if use_row[x]]))
+        # self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys()]))
+        vertical_header = [' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]]
+        QgsMessageLog.logMessage(str(vertical_header), 'SnowPlow')
+
+        self.dlg.tableStats.setVerticalHeaderLabels(vertical_header)
+        # self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         use_cols = []
         use_col_ind = []
         for col in range(len(columns)):
             null = True
             for k in table_rows.keys():
-                if float(table_rows[k][col]) != 0.0: 
+                if use_row[k] and float(table_rows[k][col]) != 0.0:
                     null = False
                     break
             if not null:
@@ -507,14 +511,17 @@ class SnowPlow:
         horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(col),col) for col in use_cols]
         self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
 
-        for i,k in enumerate(table_rows.keys()):
-            # if use_row[k]:
-            for tab_j,col in enumerate(use_col_ind):
-                j = col
-                v = table_rows[k][j]
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, QVariant(str(v)))
-                self.dlg.tableStats.setItem(i,tab_j,item)
+        i = 0
+        for k in table_rows.keys():
+            if use_row[k]:
+                QgsMessageLog.logMessage(str(table_rows[k]), 'SnowPlow')
+                for tab_j,col in enumerate(use_col_ind):
+                    j = col
+                    v = table_rows[k][j]
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, QVariant(str(v)))
+                    self.dlg.tableStats.setItem(i,tab_j,item)
+                i += 1
 
     # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
 

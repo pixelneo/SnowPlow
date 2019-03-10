@@ -294,8 +294,6 @@ class SnowPlow:
             Fills lists for selection of rows and columns when computing stats.
         '''
         names = self._get_feat_names()
-        for i in list(names):
-            QgsMessageLog.logMessage(i[1], 'SnowPlow')
 
 
         self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
@@ -310,13 +308,23 @@ class SnowPlow:
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
 
     def column_sel_changed(self, i):
+        '''
+            Display function to selected column
+        '''
+
         func_id = self.data_holder.column_function[i]
         self.dlg.func_sel.setCurrentIndex(func_id)
 
     def func_sel_changed(self, i):
+        '''
+            Stores new, selected function for current column
+        '''
         self.data_holder.column_function[self.dlg.column_sel.currentIndex()] = i
 
     def fill_column_sel(self):
+        '''
+            Fills ComboBox with the names of columns on which statisctics may be applied
+        '''
         names_col = self._get_feat_names()
         columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real']]
 
@@ -327,6 +335,9 @@ class SnowPlow:
         self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
 
     def fill_func_sel(self):
+        '''
+            Fills ComboBox with the names or function to be applied on column 
+        '''
         for i in self.data_holder.funcs.keys():
             self.dlg.func_sel.addItem(self.data_holder.funcs[i][0])
         

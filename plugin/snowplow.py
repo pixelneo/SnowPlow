@@ -36,6 +36,7 @@ import os.path
 import concurrent.futures
 import threading
 from functools import partial
+from statistics import mean
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -52,10 +53,17 @@ class DataHolder:
         self.colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220), (0, 130, 200, 220), (245, 130, 48, 220), (145, 30, 180, 220), (70, 220, 220, 220), (220, 50, 210, 220)]
         # self.colours = ['green', 'red', 'yellow', 'blue']
         self.current = 0
+        self.column_function = {}
+        self.funcs = {0: ('sum', lambda x: sum(x)), 1: ('avg', lambda x: mean(x)), 2: ('max',lambda x: max(x)), 3: ('min',lambda x: min(x))}
+
+    def add_column_function(self, column_id, func_id):
+        self.column_function[column_id] = func_id
 
     def next_colour(self):
         self.current = (self.current + 1) % len(self.colours)
         return QColor(*self.colours[self.current])
+
+
 
 
 
@@ -293,16 +301,29 @@ class SnowPlow:
             self.dlg.layer_sel.model().appendRow(item)
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
 
-    def column_sel_changed(self):
-        pass
+    def column_sel_changed(self, i):
+        func_id = self.data_holder.column_function[i]
+        self.dlg.func_sel.setCurrentIndex(func_id)
+
+    def func_sel_changed(self, i):
+        self.data_holder.column_function[self.dlg.column_sel.currentIndex()] = i
 
     def fill_column_sel(self):
         names_col = self._get_feat_names()
         columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real']]
-        for c in sorted(columns):
+
+        for i,c in enumerate(sorted(columns)):
+            self.data_holder.add_column_function(i, 0)   # 0 = 'sum' function
             self.dlg.column_sel.addItem(c)
 
         self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
+
+    def fill_func_sel(self):
+        for i in self.data_holder.funcs.keys():
+            self.dlg.func_sel.addItem(self.data_holder.funcs[i][0])
+        
+        self.dlg.func_sel.currentIndexChanged.connect(self.func_sel_changed)
+
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
         '''
@@ -415,8 +436,8 @@ class SnowPlow:
         self.dlg.tableStats.setRowCount(len(rows))
         self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         # fill the dict  
-        for f in layer.getFeatures():
-            for i, col in enumerate(columns):
+        for i, col in enumerate(columns):
+            for f in layer.getFeatures():
                 if f[col] != NULL:
                     try:
                         table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
@@ -455,11 +476,11 @@ class SnowPlow:
 
     def run(self):
         """Run method that performs all the real work"""
-        self.data_holder = DataHolder()
 
         # Create the dialog with elements (after translation) and keep reference
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
+            self.data_holder = DataHolder()
             self.first_start = False
             self.dlg = SnowPlowDialog()
             self.fill_layers()
@@ -477,6 +498,7 @@ class SnowPlow:
 
 
             self.fill_column_sel()
+            self.fill_func_sel()
             self.fill_rows_and_columns()
             self.fill_cars()
 

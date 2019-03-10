@@ -64,6 +64,9 @@ class DataHolder:
     def function_for_column(self, column_name):
         return self.funcs[self.column_function[self.column_to_id[column_name]]][1]
 
+    def function_name_for_column(self, column_name):
+        return self.funcs[self.column_function[self.column_to_id[column_name]]][0]
+
     def next_colour(self):
         self.current = (self.current + 1) % len(self.colours)
         return QColor(*self.colours[self.current])
@@ -457,7 +460,6 @@ class SnowPlow:
                     func = self.data_holder.function_for_column(col)
                     table_rows[row_key][i] = func(to_func[row_key])
 
-              
 
         use_cols = []
         use_col_ind = []
@@ -472,7 +474,9 @@ class SnowPlow:
                 use_col_ind.append(col)
 
         self.dlg.tableStats.setColumnCount(len(use_cols))
-        self.dlg.tableStats.setHorizontalHeaderLabels(use_cols)
+        
+        horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(col),col) for col in use_cols]
+        self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
 
         for i,k in enumerate(table_rows.keys()):
             for tab_j,col in enumerate(use_col_ind):

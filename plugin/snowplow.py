@@ -293,6 +293,16 @@ class SnowPlow:
             self.dlg.layer_sel.model().appendRow(item)
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
 
+    def column_sel_changed(self):
+        pass
+
+    def fill_column_sel(self):
+        names_col = self._get_feat_names()
+        columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real']]
+        for c in sorted(columns):
+            self.dlg.column_sel.addItem(c)
+
+        self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
         '''
@@ -466,6 +476,7 @@ class SnowPlow:
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
 
+            self.fill_column_sel()
             self.fill_rows_and_columns()
             self.fill_cars()
 

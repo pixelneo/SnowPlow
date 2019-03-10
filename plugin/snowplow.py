@@ -450,28 +450,46 @@ class SnowPlow:
         # create dict with keys like '1,salt'
         table_rows = {}
         to_func = {}
-        for row in rows:
-            table_rows[','.join([str(i) for i in row])] = [0.0]*len(columns)
-            to_func[','.join([str(i) for i in row])] = []
+        use_row = {}
 
-        self.dlg.tableStats.setRowCount(len(rows))
-        self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
+        for row in rows:
+            row_key = ','.join([str(i) for i in row])
+            table_rows[row_key] = [0.0]*len(columns)
+            to_func[row_key] = []
+            for _ in range(len(columns)):
+                to_func[row_key].append([])
+            use_row[row_key] = False
+
+
         # fill the dict  
-        for i, col in enumerate(columns):
-            for f in layer.getFeatures():
+        for f in layer.getFeatures():
+            for i, col in enumerate(columns):
                 if f[col] != NULL:
                     row_key = ','.join([str(f[x]) for x in selected_rows]) 
                     try:
-                        to_func[row_key].append(float(f[col]))
+                        to_func[row_key][i].append(float(f[col]))
+                        # if the previous statement does not fail, use row
+                        use_row[row_key] = True
                     except KeyError as ke:
                         continue
                         # QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
                         # QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
-                    func = self.data_holder.function_for_column(col)
-                    table_rows[row_key][i] = func(to_func[row_key])
+        for k in to_func.keys():
+            for i, col in enumerate(columns):
+                row_key = k
+                func = self.data_holder.function_for_column(col)
+                table_rows[row_key][i] = func(to_func[row_key][i])
+                if self.data_holder.function_name_for_column(col) == 'max':
+                    QgsMessageLog.logMessage(str(to_func[row_key][i]), 'SnowPlow')
+                            # TODO to_func pole nefunguje !!!!!!!!!!!!1
 
 
+
+        # self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys() if use_row[x]]))
+        self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys()]))
+        # self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]])
+        self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         use_cols = []
         use_col_ind = []
         for col in range(len(columns)):
@@ -490,6 +508,7 @@ class SnowPlow:
         self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
 
         for i,k in enumerate(table_rows.keys()):
+            # if use_row[k]:
             for tab_j,col in enumerate(use_col_ind):
                 j = col
                 v = table_rows[k][j]
@@ -497,7 +516,7 @@ class SnowPlow:
                 item.setData(Qt.DisplayRole, QVariant(str(v)))
                 self.dlg.tableStats.setItem(i,tab_j,item)
 
-        # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
+    # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
 
 
     def run(self):

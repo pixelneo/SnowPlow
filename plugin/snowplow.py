@@ -54,10 +54,15 @@ class DataHolder:
         # self.colours = ['green', 'red', 'yellow', 'blue']
         self.current = 0
         self.column_function = {}
+        self.column_to_id = {}
         self.funcs = {0: ('sum', lambda x: sum(x)), 1: ('avg', lambda x: mean(x)), 2: ('max',lambda x: max(x)), 3: ('min',lambda x: min(x))}
 
-    def add_column_function(self, column_id, func_id):
+    def add_column_function(self, column_id, column_name, func_id):
+        self.column_to_id[column_name] = column_id
         self.column_function[column_id] = func_id
+
+    def function_for_column(self, column_name):
+        return self.funcs[self.column_function[self.column_to_id[column_name]]][1]
 
     def next_colour(self):
         self.current = (self.current + 1) % len(self.colours)
@@ -313,7 +318,7 @@ class SnowPlow:
         columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real']]
 
         for i,c in enumerate(sorted(columns)):
-            self.data_holder.add_column_function(i, 0)   # 0 = 'sum' function
+            self.data_holder.add_column_function(i,c, 0)   # 0 = 'sum' function
             self.dlg.column_sel.addItem(c)
 
         self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
@@ -430,8 +435,10 @@ class SnowPlow:
 
         # create dict with keys like '1,salt'
         table_rows = {}
+        to_func = {}
         for row in rows:
             table_rows[','.join([str(i) for i in row])] = [0.0]*len(columns)
+            to_func[','.join([str(i) for i in row])] = []
 
         self.dlg.tableStats.setRowCount(len(rows))
         self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
@@ -439,14 +446,18 @@ class SnowPlow:
         for i, col in enumerate(columns):
             for f in layer.getFeatures():
                 if f[col] != NULL:
+                    row_key = ','.join([str(f[x]) for x in selected_rows]) 
                     try:
-                        table_rows[','.join([str(f[x]) for x in selected_rows])][i] += float(f[col])
+                        to_func[row_key].append(float(f[col]))
                     except KeyError as ke:
-                        pass
+                        continue
                         # QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
                         # QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
+                    func = self.data_holder.function_for_column(col)
+                    table_rows[row_key][i] = func(to_func[row_key])
 
+              
 
         use_cols = []
         use_col_ind = []

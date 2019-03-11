@@ -419,7 +419,7 @@ class SnowPlow:
         '''
             Colour transits of selected cars.
         '''
-        def select_new_transit(symbol, renderer, label, expression, color, size=2.0):
+        def select_new_transit(symbol, renderer, label, expression, color, size=4.0):
             root_rule = renderer.rootRule()
             rule = root_rule.children()[0].clone()
             rule.setLabel(label)
@@ -435,10 +435,13 @@ class SnowPlow:
         QgsMessageLog.logMessage(str(selected_cars), 'SnowPlow')
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        colour = QColor(250, 0, 0)
+        colour = QColor(0,255,0)
+
+        exprs = []
         for t, car in zip(selected_cars_texts, selected_cars):
-            expr = '"transit_cars" LIKE \'%{}%\' or "transit_cars" LIKE \'%,{},%\' or "transit_cars" LIKE \'{},%\' or "transit_cars" LIKE \'%,{}\''.format(*[str(car) for _ in range(4)])
-            QgsMessageLog.logMessage(expr, 'SnowPlow')
+            expr = 'regexp_match( "transit_cars", \'((^)|(.*,)){}((,.*)|($))\')'.format(str(car))
+            exprs.append(expr)
+            # select_new_transit(symbol, self.renderer, t, ' or '.join(exprs), colour)
             select_new_transit(symbol, self.renderer, t, expr, colour)
 
         layer.setRenderer(self.renderer)

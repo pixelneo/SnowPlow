@@ -529,23 +529,17 @@ class SnowPlow:
                 i += 1
 
         # final row for func(all)
-
-
-        #TODO neufnguji indices for columns
-        for tab_j,col in enumerate(use_col_ind):
+        for i, col in enumerate(use_cols):
             ls = []
             for k in table_rows.keys():
-                    ls.extend(to_func[k][tab_j])
+                    ls.extend(to_func[k][i])
             if len(ls) != 0:
-                QgsMessageLog.logMessage(str(tab_j) + ' sloupec', 'SnowPlow')
-                QgsMessageLog.logMessage(str(ls), 'SnowPlow')
 
-                func = self.data_holder.function_for_column_id(tab_j)
+                func = self.data_holder.function_for_column(col)
                 v = func(ls)
-                QgsMessageLog.logMessage(str(v), 'SnowPlow')
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
-                self.dlg.tableStats.setItem(row_count - 1,tab_j,item)
+                self.dlg.tableStats.setItem(row_count - 1,i,item)
 
 
 

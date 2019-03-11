@@ -426,7 +426,6 @@ class SnowPlow:
             Computes statistics.
         '''
 
-        # TODO get columns and their types, do not filter by floats, do no summarize strings, nulls, ..
 
 
         layer = self.get_layer()
@@ -514,6 +513,7 @@ class SnowPlow:
         horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(col),col) for col in use_cols]
         self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
 
+        # fill in the table
         i = 0
         for k in table_rows.keys():
             if use_row[k]:
@@ -527,13 +527,11 @@ class SnowPlow:
 
         # final row for func(all)
         j = 0
-        QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
         for i, col in zip(use_col_ind,use_cols):
             ls = []
             for k in table_rows.keys():
                 if use_row[k]:
                     ls.extend(to_func[k][i])
-            QgsMessageLog.logMessage(str(ls) + str(col), 'SnowPlow')
             if len(ls) != 0:
                 func = self.data_holder.function_for_column(col)
                 v = func(ls)
@@ -543,10 +541,6 @@ class SnowPlow:
                 j += 1
 
 
-
-
-
-    # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
 
 
     def run(self):

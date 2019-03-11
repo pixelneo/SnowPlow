@@ -37,6 +37,7 @@ import concurrent.futures
 import threading
 from functools import partial
 from statistics import mean
+import statistics
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -63,6 +64,9 @@ class DataHolder:
 
     def function_for_column(self, column_name):
         return self.funcs[self.column_function[self.column_to_id[column_name]]][1]
+    
+    def function_for_column_id(self, column_id):
+        return self.funcs[self.column_function[column_id]][1]
 
     def function_name_for_column(self, column_name):
         return self.funcs[self.column_function[self.column_to_id[column_name]]][0]
@@ -476,24 +480,26 @@ class SnowPlow:
                         # QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
         for k in to_func.keys():
-            for i, col in enumerate(columns):
-                row_key = k
-                func = self.data_holder.function_for_column(col)
-                table_rows[row_key][i] = func(to_func[row_key][i])
-                if self.data_holder.function_name_for_column(col) == 'max':
-                    QgsMessageLog.logMessage(str(to_func[row_key][i]), 'SnowPlow')
-                            # TODO to_func pole nefunguje !!!!!!!!!!!!1
+            if use_row[k]:
+                for i, col in enumerate(columns):
+                    if len(to_func[k][i]) != 0:
+                        row_key = k
+                        func = self.data_holder.function_for_column(col)
+                        try:
+                            # TODO is use_row not null
+                            table_rows[row_key][i] = func(to_func[row_key][i])
+                        except ValueError as e:
+                            QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
+                            raise e
+                                # TODO to_func pole nefunguje !!!!!!!!!!!!1
 
 
+        row_count = len([1 for x in use_row.keys() if use_row[x]]) + 1          # + 1 for final row
+        self.dlg.tableStats.setRowCount(row_count)
 
-        QgsMessageLog.logMessage(str(use_row), 'SnowPlow')
-        self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys() if use_row[x]]))
-        # self.dlg.tableStats.setRowCount(len([1 for x in use_row.keys()]))
         vertical_header = [' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]]
-        QgsMessageLog.logMessage(str(vertical_header), 'SnowPlow')
-
+        vertical_header.append('TOTAL')
         self.dlg.tableStats.setVerticalHeaderLabels(vertical_header)
-        # self.dlg.tableStats.setVerticalHeaderLabels([' ✕ '.join([str(x) for x in row]) for row in rows])
         use_cols = []
         use_col_ind = []
         for col in range(len(columns)):
@@ -514,14 +520,36 @@ class SnowPlow:
         i = 0
         for k in table_rows.keys():
             if use_row[k]:
-                QgsMessageLog.logMessage(str(table_rows[k]), 'SnowPlow')
                 for tab_j,col in enumerate(use_col_ind):
                     j = col
                     v = table_rows[k][j]
                     item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, QVariant(str(v)))
+                    item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
                     self.dlg.tableStats.setItem(i,tab_j,item)
                 i += 1
+
+        # final row for func(all)
+
+
+        #TODO neufnguji indices for columns
+        for tab_j,col in enumerate(use_col_ind):
+            ls = []
+            for k in table_rows.keys():
+                    ls.extend(to_func[k][tab_j])
+            if len(ls) != 0:
+                QgsMessageLog.logMessage(str(tab_j) + ' sloupec', 'SnowPlow')
+                QgsMessageLog.logMessage(str(ls), 'SnowPlow')
+
+                func = self.data_holder.function_for_column_id(tab_j)
+                v = func(ls)
+                QgsMessageLog.logMessage(str(v), 'SnowPlow')
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
+                self.dlg.tableStats.setItem(row_count - 1,tab_j,item)
+
+
+
+
 
     # QgsMessageLog.logMessage(','.join([str(r) for r in rows]), 'SnowPlow')
 

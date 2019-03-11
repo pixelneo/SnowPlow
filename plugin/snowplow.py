@@ -476,8 +476,6 @@ class SnowPlow:
                         use_row[row_key] = True
                     except KeyError as ke:
                         continue
-                        # QgsMessageLog.logMessage('Key error 1', 'SnowPlow')
-                        # QgsMessageLog.logMessage(','.join([str(f[x]) for x in selected_rows]), 'SnowPlow')
 
         for k in to_func.keys():
             if use_row[k]:
@@ -491,7 +489,6 @@ class SnowPlow:
                         except ValueError as e:
                             QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
                             raise e
-                                # TODO to_func pole nefunguje !!!!!!!!!!!!1
 
 
         row_count = len([1 for x in use_row.keys() if use_row[x]]) + 1          # + 1 for final row
@@ -529,17 +526,21 @@ class SnowPlow:
                 i += 1
 
         # final row for func(all)
-        for i, col in enumerate(use_cols):
+        j = 0
+        QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
+        for i, col in zip(use_col_ind,use_cols):
             ls = []
             for k in table_rows.keys():
+                if use_row[k]:
                     ls.extend(to_func[k][i])
+            QgsMessageLog.logMessage(str(ls) + str(col), 'SnowPlow')
             if len(ls) != 0:
-
                 func = self.data_holder.function_for_column(col)
                 v = func(ls)
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
-                self.dlg.tableStats.setItem(row_count - 1,i,item)
+                self.dlg.tableStats.setItem(row_count - 1, j, item)
+                j += 1
 
 
 

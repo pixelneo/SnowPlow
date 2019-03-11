@@ -219,7 +219,7 @@
          <item>
           <widget class="QDialogButtonBox" name="car_sel_buttons">
            <property name="standardButtons">
-            <set>QDialogButtonBox::Apply|QDialogButtonBox::Reset</set>
+            <set>QDialogButtonBox::Apply|QDialogButtonBox::Reset|QDialogButtonBox::YesToAll</set>
            </property>
           </widget>
          </item>

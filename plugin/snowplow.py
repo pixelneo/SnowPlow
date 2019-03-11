@@ -377,7 +377,6 @@ class SnowPlow:
 
         layer.setRenderer(renderer)
         layer.triggerRepaint()
-        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
     def initial_draw(self):
         '''
@@ -393,6 +392,7 @@ class SnowPlow:
         self.colour_feature(colour_priority, 'priority', self.renderer)
         self.colour_feature(colour_method, 'method', self.renderer, 2.5, ['sold', 'inert', 'snowplow'])
         self.set_labels()
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
     def set_labels(self):
         '''
@@ -415,11 +415,7 @@ class SnowPlow:
         layer.setLabeling(ls)
         layer.triggerRepaint()
 
-    def _apply_transit(self):
-        '''
-            Colour transits of selected cars.
-        '''
-        def select_new_transit(symbol, renderer, label, expression, color, size=4.0):
+    def select_new_transit(self, symbol, renderer, label, expression, color, size=4.0):
             root_rule = renderer.rootRule()
             rule = root_rule.children()[0].clone()
             rule.setLabel(label)
@@ -428,11 +424,14 @@ class SnowPlow:
             rule.symbol().setWidth(size)
             root_rule.appendChild(rule)
 
+
+    def _apply_transit(self):
+        '''
+            Colour transits of selected cars.
+        '''
         selected_cars_texts = [x.text() for x in self.dlg.cars.selectedItems()]
         selected_cars = [re.sub(r'[^\d]+', '', x) for x in selected_cars_texts]
 
-        QgsMessageLog.logMessage(str(selected_cars_texts), 'SnowPlow')
-        QgsMessageLog.logMessage(str(selected_cars), 'SnowPlow')
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         colour = QColor(0,255,0)
@@ -442,11 +441,27 @@ class SnowPlow:
             expr = 'regexp_match( "transit_cars", \'((^)|(.*,)){}((,.*)|($))\')'.format(str(car))
             exprs.append(expr)
             # select_new_transit(symbol, self.renderer, t, ' or '.join(exprs), colour)
-            select_new_transit(symbol, self.renderer, t, expr, colour)
+            self.select_new_transit(symbol, self.renderer, t, expr, colour)
+
+        QgsMessageLog.logMessage(str(' OR '.join(exprs)), 'SnowPlow')
 
         layer.setRenderer(self.renderer)
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
+
+    def _all_transits(self):
+        layer = self.get_layer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        colour = QColor(0,255,0)
+
+
+        expr = '"transit_cars" IS NOT NULL AND "transit_cars" != \'\''
+        self.select_new_transit(symbol, self.renderer, 'Transits', expr, colour)
+        layer.setRenderer(self.renderer)
+        layer.triggerRepaint()
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
 
 
 
@@ -604,6 +619,8 @@ class SnowPlow:
             apply_transit.clicked.connect(self._apply_transit)
             reset_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Reset)
             reset_transit.clicked.connect(self._reset_selection_cars)
+            all_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.YesToAll)
+            all_transit.clicked.connect(self._all_transits)
 
             self.dlg.refresh.clicked.connect(self.initial_draw)
 

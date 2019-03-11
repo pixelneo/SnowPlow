@@ -57,6 +57,7 @@ class DataHolder:
         self.column_function = {}
         self.column_to_id = {}
         self.funcs = {0: ('sum', lambda x: sum(x)), 1: ('avg', lambda x: mean(x)), 2: ('max',lambda x: max(x)), 3: ('min',lambda x: min(x))}
+        self.car_label = "maintaining_car"
 
     def add_column_function(self, column_id, column_name, func_id):
         self.column_to_id[column_name] = column_id
@@ -385,11 +386,11 @@ class SnowPlow:
          # set colours
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        renderer = QgsRuleBasedRenderer(symbol)
+        self.renderer = QgsRuleBasedRenderer(symbol)
         colour_method = [ (255, 30, 30, 15),(30, 30, 255, 15), (30, 255, 30, 15)]
         colour_priority = [(230, 25, 75), (0, 0, 255), (50, 170, 65)]
-        self.colour_feature(colour_priority, 'priority', renderer)
-        self.colour_feature(colour_method, 'method', renderer, 2.5, ['sold', 'inert', 'snowplow'])
+        self.colour_feature(colour_priority, 'priority', self.renderer)
+        self.colour_feature(colour_method, 'method', self.renderer, 2.5, ['sold', 'inert', 'snowplow'])
         self.set_labels()
 
     def set_labels(self):
@@ -404,7 +405,7 @@ class SnowPlow:
 
         ls  = QgsPalLayerSettings()
         ls.setFormat(tf)
-        ls.fieldName = "maintaining_car"
+        ls.fieldName = self.data_holder.car_label 
         ls.placement = 2
         ls.enabled = True
         ls = QgsVectorLayerSimpleLabeling(ls)
@@ -413,21 +414,56 @@ class SnowPlow:
         layer.setLabeling(ls)
         layer.triggerRepaint()
 
-    def _reset_selection(self, obj):
+    def _apply_transit(self):
+        '''
+            Colour transits of selected cars.
+        '''
+        def select_new_transit(symbol, renderer, label, expression, color, size=10.0):
+            root_rule = renderer.rootRule()
+            rule = root_rule.children()[0].clone()
+            rule.setLabel(label)
+            rule.setFilterExpression(expression)
+            rule.symbol().setColor(color)
+            rule.symbol().setWidth(size)
+            root_rule.appendChild(rule)
+
+        selected_cars_texts = [x.text() for x in self.dlg.listRows.selectedItems()]
+        selected_cars = [51, 14]
+
+        QgsMessageLog.logMessage(str(selected_cars_texts), 'SnowPlow')
+        layer = self.get_layer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        colour = QColor(250, 0, 0)
+        for t, car in zip(selected_cars_texts, selected_cars):
+            expr = '"transit_cars" LIKE \'%{}%\' or "transit_cars" LIKE \'%,{},%\' or "transit_cars" LIKE \'{},%\' or "transit_cars" LIKE \'%,{}\''.format(*[str(car) for _ in range(4)])
+            QgsMessageLog.logMessage(expr, 'SnowPlow')
+            select_new_transit(symbol, self.renderer, t, expr, colour)
+
+        layer.setRenderer(self.renderer)
+        layer.triggerRepaint()
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+
+
+
+    def _reset_selection_cars(self):
         '''
             Resets selection of columns and rows.
         '''
-        obj.clearSelection()
+        self.dlg.cars.clearSelection()
+        self.initial_draw()
 
-    def _apply_transit(self):
-        pass
+
+    def _reset_selection_columns(self):
+        '''
+            Resets selection of columns and rows.
+        '''
+        self.dlg.listRows.clearSelection()
+
+
     def _apply_rows_cols(self):
         '''
             Computes statistics.
         '''
-
-
-
         layer = self.get_layer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]
 
@@ -455,6 +491,7 @@ class SnowPlow:
         to_func = {}
         use_row = {}
 
+        # Initialize lists and dicts
         for row in rows:
             row_key = ','.join([str(i) for i in row])
             table_rows[row_key] = [0.0]*len(columns)
@@ -556,12 +593,12 @@ class SnowPlow:
             apply_row_column = self.dlg.row_sel_buttons.button(QDialogButtonBox.Apply)
             apply_row_column.clicked.connect(self._apply_rows_cols)
             reset_row_column_selection = self.dlg.row_sel_buttons.button(QDialogButtonBox.Reset)
-            reset_row_column_selection.clicked.connect(partial(self._reset_selection, self.dlg.listRows))
+            reset_row_column_selection.clicked.connect(self._reset_selection_columns)
 
             apply_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Apply)
             apply_transit.clicked.connect(self._apply_transit)
             reset_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Reset)
-            reset_transit.clicked.connect(partial(self._reset_selection, self.dlg.cars))
+            reset_transit.clicked.connect(self._reset_selection_cars)
 
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
@@ -571,7 +608,12 @@ class SnowPlow:
             self.fill_rows_and_columns()
             self.fill_cars()
 
+            layer = self.get_layer()
+            symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+            self.renderer = QgsRuleBasedRenderer(symbol)
+
             self.initial_draw()
+
 
         # show the dialog
         self.dlg.show()

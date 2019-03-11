@@ -38,6 +38,7 @@ import threading
 from functools import partial
 from statistics import mean
 import statistics
+import re
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -418,7 +419,7 @@ class SnowPlow:
         '''
             Colour transits of selected cars.
         '''
-        def select_new_transit(symbol, renderer, label, expression, color, size=10.0):
+        def select_new_transit(symbol, renderer, label, expression, color, size=2.0):
             root_rule = renderer.rootRule()
             rule = root_rule.children()[0].clone()
             rule.setLabel(label)
@@ -427,10 +428,11 @@ class SnowPlow:
             rule.symbol().setWidth(size)
             root_rule.appendChild(rule)
 
-        selected_cars_texts = [x.text() for x in self.dlg.listRows.selectedItems()]
-        selected_cars = [51, 14]
+        selected_cars_texts = [x.text() for x in self.dlg.cars.selectedItems()]
+        selected_cars = [re.sub(r'[^\d]+', '', x) for x in selected_cars_texts]
 
         QgsMessageLog.logMessage(str(selected_cars_texts), 'SnowPlow')
+        QgsMessageLog.logMessage(str(selected_cars), 'SnowPlow')
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         colour = QColor(250, 0, 0)

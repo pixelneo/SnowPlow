@@ -526,19 +526,21 @@ class SnowPlow:
         # fill the dict  
 
         for f in layer.getFeatures():
+            row_key = ','.join([str(f[x]) for x in selected_rows]) 
+            try:
+                x = feature_count[row_key]
+                # if the previous statement does not fail, use row
+                use_row[row_key] = True
+            except KeyError as ke:
+                continue
+            if 'car' in str(f['id']):
+                feature_count[row_key] += 1
             for i, col in enumerate(columns):
                 if f[col] != NULL:
-                    row_key = ','.join([str(f[x]) for x in selected_rows]) 
-                    try:
-                        to_func[row_key][i].append(float(f[col]))
-                        # if the previous statement does not fail, use row
-                        use_row[row_key] = True
-                    except KeyError as ke:
-                        continue
+                    to_func[row_key][i].append(float(f[col]))
 
         for k in to_func.keys():
             if use_row[k]:
-                sum_items = 0
                 for i, col in enumerate(columns):
                     if len(to_func[k][i]) != 0:
                         row_key = k
@@ -546,14 +548,9 @@ class SnowPlow:
                         try:
                             # TODO is use_row not null
                             table_rows[row_key][i] = func(to_func[row_key][i])
-                            sum_items = len(to_func[row_key][i])
-                            QgsMessageLog.logMessage(str(), 'SnowPlow')
-                            QgsMessageLog.logMessage(str(sum_items), 'SnowPlow')
                         except ValueError as e:
                             QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
                             raise e
-                feature_count[k] = sum_items
-
 
         row_count = len([1 for x in use_row.keys() if use_row[x]]) + 1          # + 1 for final row
         self.dlg.tableStats.setRowCount(row_count)
@@ -573,11 +570,11 @@ class SnowPlow:
                 use_cols.append(columns[col])
                 use_col_ind.append(col)
 
-        self.dlg.tableStats.setColumnCount(len(use_cols))
-        # self.dlg.tableStats.setColumnCount(len(use_cols) + 1)
+        # self.dlg.tableStats.setColumnCount(len(use_cols))
+        self.dlg.tableStats.setColumnCount(len(use_cols) + 1)
         
         horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(col),col) for col in use_cols]
-        # horizontal_func_cols.append('Number of rows')
+        horizontal_func_cols.append('# CARS')
         self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
 
         # fill in the table
@@ -590,9 +587,9 @@ class SnowPlow:
                     item = QTableWidgetItem()
                     item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
                     self.dlg.tableStats.setItem(i,tab_j,item)
-                # item = QTableWidgetItem()
-                # item.setData(Qt.DisplayRole, QVariant('{}'.format(feature_count[k])))
-                # self.dlg.tableStats.setItem(i, len(use_cols), item)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, QVariant('{}'.format(feature_count[k])))
+                self.dlg.tableStats.setItem(i, len(use_cols), item)
                 i += 1
 
         # final row for func(all)
@@ -609,6 +606,11 @@ class SnowPlow:
                 item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
                 self.dlg.tableStats.setItem(row_count - 1, j, item)
                 j += 1
+
+
+        # bottom right corner, delete
+        item = QTableWidgetItem()
+        self.dlg.tableStats.setItem(row_count - 1, len(use_cols), item)
 
 
 

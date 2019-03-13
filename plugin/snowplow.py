@@ -305,9 +305,13 @@ class SnowPlow:
         self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
         self.dlg.listRows.sortItems()
 
+    def get_all_layers(self):
+        pass
+
     def fill_layers(self):
-        layer_list = QgsProject.instance().layerTreeRoot().children() 
+        layer_list = QgsProject.instance().layerTreeRoot().findLayers()
         layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
+
         for i, layer in enumerate(layers):
             item = QStandardItem('{}. {}'.format(i, layer.name()))
             self.dlg.layer_sel.model().appendRow(item)

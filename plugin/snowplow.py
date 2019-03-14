@@ -58,7 +58,12 @@ class DataHolder:
         self.column_function = {}
         self.column_to_id = {}
         self.funcs = {0: ('sum', lambda x: sum(x)), 1: ('avg', lambda x: mean(x)), 2: ('max',lambda x: max(x)), 3: ('min',lambda x: min(x))}
-        self.car_label = "maintaining_car"
+        self.car_label = 'maintaining_car'
+        self.priority_column = 'priority'
+        self.priority_options = [1,2,3]
+        self.method_column = 'method'
+        self.method_options = ['sold','inert','snowplow']
+
 
     def add_column_function(self, column_id, column_name, func_id):
         self.column_to_id[column_name] = column_id
@@ -76,6 +81,10 @@ class DataHolder:
     def next_colour(self):
         self.current = (self.current + 1) % len(self.colours)
         return QColor(*self.colours[self.current])
+
+    def reset(self):
+        self.column_function = {}
+        self.column_to_id = {}
 
 
 
@@ -282,6 +291,7 @@ class SnowPlow:
 
     def fill_cars(self):
         # fill listview with car IDs
+        self.dlg.cars.clear()
         layer = self.get_layer()
         car_ids = set()
         try:
@@ -292,7 +302,7 @@ class SnowPlow:
             car_ids = sorted(car_ids)
             self.dlg.cars.addItems([str(x) for x in list(car_ids)])
         except Exception as e:
-            iface.messageBar().pushMessage("Error", "Most likely, no layer is selected.", level=Qgis.Critical)
+            self.iface.messageBar().pushMessage("Warning", "Most likely, selected layer contains no cars.")
             raise e
 
     def fill_rows_and_columns(self):
@@ -308,15 +318,16 @@ class SnowPlow:
     def get_all_layers(self):
         pass
 
-    def fill_layers(self):
-        layer_list = QgsProject.instance().layerTreeRoot().findLayers()
-        layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
 
-        for i, layer in enumerate(layers):
-            item = QStandardItem('{}. {}'.format(i, layer.name()))
-            self.dlg.layer_sel.model().appendRow(item)
-            self.dlg.layer_sel.setItemData(i, str(layer.id()))
-
+    def layer_changed(self, i):
+        '''
+            Layer has been changed in the selection.
+        '''
+        self.data_holder.reset()
+        self.fill_column_sel()
+        self.fill_func_sel()
+        self.fill_rows_and_columns()
+        self.fill_cars()
     def column_sel_changed(self, i):
         '''
             Display function to selected column
@@ -331,10 +342,27 @@ class SnowPlow:
         '''
         self.data_holder.column_function[self.dlg.column_sel.currentIndex()] = i
 
+ 
+    def fill_layers(self):
+        '''
+            Fills the list with LineString layers.
+        '''
+        self.dlg.layer_sel.clear()
+        layer_list = QgsProject.instance().layerTreeRoot().findLayers()
+        layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
+
+        for i, layer in enumerate(layers):
+            item = QStandardItem('{}. {}'.format(i, layer.name()))
+            self.dlg.layer_sel.model().appendRow(item)
+            self.dlg.layer_sel.setItemData(i, str(layer.id()))
+        
+        self.dlg.column_sel.currentIndexChanged.connect(self.layer_changed)
+
     def fill_column_sel(self):
         '''
             Fills ComboBox with the names of columns on which statisctics may be applied
         '''
+        self.dlg.column_sel.clear()
         names_col = self._get_feat_names()
         columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real']]
 
@@ -348,6 +376,7 @@ class SnowPlow:
         '''
             Fills ComboBox with the names or function to be applied on column 
         '''
+        self.dlg.func_sel.clear()
         for i in self.data_holder.funcs.keys():
             self.dlg.func_sel.addItem(self.data_holder.funcs[i][0])
         
@@ -393,8 +422,8 @@ class SnowPlow:
         self.renderer = QgsRuleBasedRenderer(symbol)
         colour_method = [ (255, 30, 30, 15),(30, 30, 255, 15), (30, 255, 30, 15)]
         colour_priority = [(230, 25, 75), (0, 0, 255), (50, 170, 65)]
-        self.colour_feature(colour_priority, 'priority', self.renderer)
-        self.colour_feature(colour_method, 'method', self.renderer, 2.5, ['sold', 'inert', 'snowplow'])
+        self.colour_feature(colour_priority, self.data_holder.priority_column, self.renderer, options=self.data_holder.priority_options)
+        self.colour_feature(colour_method, self.data_holder.method_column, self.renderer, 2.5, options=self.data_holder.method_options)
         self.set_labels()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
@@ -420,13 +449,13 @@ class SnowPlow:
         layer.triggerRepaint()
 
     def select_new_transit(self, symbol, renderer, label, expression, color, size=4.0):
-            root_rule = renderer.rootRule()
-            rule = root_rule.children()[0].clone()
-            rule.setLabel(label)
-            rule.setFilterExpression(expression)
-            rule.symbol().setColor(color)
-            rule.symbol().setWidth(size)
-            root_rule.appendChild(rule)
+        root_rule = renderer.rootRule()
+        rule = root_rule.children()[0].clone()
+        rule.setLabel(label)
+        rule.setFilterExpression(expression)
+        rule.symbol().setColor(color)
+        rule.symbol().setWidth(size)
+        root_rule.appendChild(rule)
 
 
     def _apply_transit(self):

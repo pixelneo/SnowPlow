@@ -290,8 +290,11 @@ class SnowPlow:
         return set([(x.name(), x.typeName()) for x in f.fields()])
 
     def fill_cars(self):
-        # fill listview with car IDs
+        '''
+            Fill list of cars for transits highlighting.
+        '''
         self.dlg.cars.clear()
+
         layer = self.get_layer()
         car_ids = set()
         try:
@@ -305,10 +308,11 @@ class SnowPlow:
             self.iface.messageBar().pushMessage("Warning", "Most likely, selected layer contains no cars.")
             raise e
 
-    def fill_rows_and_columns(self):
+    def fill_rows(self):
         '''
             Fills lists for selection of rows and columns when computing stats.
         '''
+        self.dlg.listRows.clear()
         names = self._get_feat_names()
 
 
@@ -324,10 +328,11 @@ class SnowPlow:
             Layer has been changed in the selection.
         '''
         self.data_holder.reset()
-        self.fill_column_sel()
-        self.fill_func_sel()
-        self.fill_rows_and_columns()
-        self.fill_cars()
+        if not self.first_start:
+            self.fill_column_sel()
+            self.fill_func_sel()
+            self.fill_rows()
+            self.fill_cars()
     def column_sel_changed(self, i):
         '''
             Display function to selected column
@@ -347,7 +352,6 @@ class SnowPlow:
         '''
             Fills the list with LineString layers.
         '''
-        self.dlg.layer_sel.clear()
         layer_list = QgsProject.instance().layerTreeRoot().findLayers()
         layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
 
@@ -411,12 +415,10 @@ class SnowPlow:
         layer.setRenderer(renderer)
         layer.triggerRepaint()
 
-    def initial_draw(self):
+    def initial_colours_draw(self):
         '''
-            Colours edges by priority and maintenance_method
-            Sets label to curcuits
+            Colour lines in the map
         '''
-         # set colours
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         self.renderer = QgsRuleBasedRenderer(symbol)
@@ -424,6 +426,15 @@ class SnowPlow:
         colour_priority = [(230, 25, 75), (0, 0, 255), (50, 170, 65)]
         self.colour_feature(colour_priority, self.data_holder.priority_column, self.renderer, options=self.data_holder.priority_options)
         self.colour_feature(colour_method, self.data_holder.method_column, self.renderer, 2.5, options=self.data_holder.method_options)
+
+    def initial_draw(self):
+        '''
+            Colours edges by priority and maintenance_method
+            Sets label to curcuits
+        '''
+         # set colours
+        layer = self.get_layer()
+        self.initial_colours_draw()
         self.set_labels()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
@@ -462,6 +473,8 @@ class SnowPlow:
         '''
             Colour transits of selected cars.
         '''
+        self.initial_colours_draw()
+
         selected_cars_texts = [x.text() for x in self.dlg.cars.selectedItems()]
         selected_cars = [re.sub(r'[^\d]+', '', x) for x in selected_cars_texts]
 
@@ -656,9 +669,10 @@ class SnowPlow:
         # Only create GUI ONCE in callback, so that it will only load when the plugin is started
         if self.first_start == True:
             self.data_holder = DataHolder()
-            self.first_start = False
             self.dlg = SnowPlowDialog()
             self.fill_layers()
+
+
             apply_row_column = self.dlg.row_sel_buttons.button(QDialogButtonBox.Apply)
             apply_row_column.clicked.connect(self._apply_rows_cols)
             reset_row_column_selection = self.dlg.row_sel_buttons.button(QDialogButtonBox.Reset)
@@ -673,17 +687,18 @@ class SnowPlow:
 
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
-
-            self.fill_column_sel()
-            self.fill_func_sel()
-            self.fill_rows_and_columns()
-            self.fill_cars()
-
             layer = self.get_layer()
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())
             self.renderer = QgsRuleBasedRenderer(symbol)
 
-            self.initial_draw()
+
+
+            self.fill_column_sel()
+            self.fill_func_sel()
+            self.fill_rows()
+            self.fill_cars()
+            self.first_start = False
+            # self.initial_draw()
 
 
         # show the dialog

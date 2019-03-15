@@ -661,6 +661,7 @@ class SnowPlow:
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, QVariant('{}'.format(int(sum([feature_count[k] for k in feature_count.keys()])))))
         self.dlg.tableStats.setItem(row_count - 1, len(use_cols), item)
+        self.msg('new position')
         self.msg(row_count-1)
         self.msg(len(use_cols))
 

@@ -39,6 +39,7 @@ from functools import partial
 from statistics import mean
 import statistics
 import re
+import json
 # from utils_snowplow import *
 
 def qgis_list_to_list(qgis_str):
@@ -53,7 +54,8 @@ def qgis_list_to_list(qgis_str):
 class DataHolder:
     def __init__(self):
         plug_dir = os.path.dirname(__file__)
-        path = os.path.join(plug_dir, 'data_holder_settings.json')
+        path = os.path.join(plug_dir, 'settings.json')
+
 
         self.colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220), (0, 130, 200, 220), (245, 130, 48, 220), (145, 30, 180, 220), (70, 220, 220, 220), (220, 50, 210, 220)]
         self.current = 0
@@ -69,7 +71,7 @@ class DataHolder:
 
         # restore settings if there is any
         if os.path.exists(path):
-            self.retore_settings(path)
+            self.restore_settings(path)
 
     def add_column_function(self, column_id, column_name, func_id):
         self.column_to_id[column_name] = column_id
@@ -93,11 +95,12 @@ class DataHolder:
         self.column_to_id = {}
 
     def restore_settings(self, path):
-        self.priority_column = 'priority'
-        self.transit_column = 'transit_cars'
-        self.priority_options = [1,2,3]
-        self.method_column = 'method'
-        self.method_options = ['sold','inert','snowplow']
+        with json.loads(str(path)) as f:
+            self.priority_column = f[priority_column]
+            self.transit_column = f[transit_column]
+            self.priority_options = f[priority_options]
+            self.method_column = f[method_column]
+            self.method_options = f[method_options]
 
 
 

@@ -326,13 +326,16 @@ class SnowPlow:
             self.fill_func_sel()
             self.fill_rows()
             self.fill_cars()
+
     def column_sel_changed(self, i):
         '''
             Display function to selected column
         '''
 
-        func_id = self.data_holder.column_function[i]
-        self.dlg.func_sel.setCurrentIndex(func_id)
+        self.msg(self.data_holder.column_function)
+        if i != -1:
+            func_id = self.data_holder.column_function[i]
+            self.dlg.func_sel.setCurrentIndex(func_id)
 
     def func_sel_changed(self, i):
         '''
@@ -361,7 +364,6 @@ class SnowPlow:
             self.dlg.layer_sel.model().appendRow(item)
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
         
-        self.dlg.column_sel.currentIndexChanged.connect(self.layer_changed)
 
     def fill_column_sel(self):
         '''
@@ -373,8 +375,8 @@ class SnowPlow:
 
         for i,c in enumerate(sorted(columns)):
             self.dlg.column_sel.addItem(c)
+            self.data_holder.add_column_function(i,c, 0)   # 0 = 'sum' function
 
-        self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
 
     def fill_func_sel(self):
         '''
@@ -384,7 +386,6 @@ class SnowPlow:
         for i in self.data_holder.funcs.keys():
             self.dlg.func_sel.addItem(self.data_holder.funcs[i][0])
         
-        self.dlg.func_sel.currentIndexChanged.connect(self.func_sel_changed)
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
@@ -434,6 +435,9 @@ class SnowPlow:
         '''
          # set colours
         layer = self.get_layer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        self.renderer = QgsRuleBasedRenderer(symbol)
+
         self.initial_colours_draw()
         self.set_labels()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
@@ -724,6 +728,9 @@ class SnowPlow:
             self.fill_func_sel()
             self.fill_rows()
             self.fill_cars()
+            self.dlg.layer_sel.currentIndexChanged.connect(self.layer_changed)
+            self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
+            self.dlg.func_sel.currentIndexChanged.connect(self.func_sel_changed)
             self.first_start = False
             # self.initial_draw()
 

@@ -52,8 +52,10 @@ def qgis_list_to_list(qgis_str):
 
 class DataHolder:
     def __init__(self):
+        plug_dir = os.path.dirname(__file__)
+        path = os.path.join(plug_dir, 'data_holder_settings.json')
+
         self.colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220), (0, 130, 200, 220), (245, 130, 48, 220), (145, 30, 180, 220), (70, 220, 220, 220), (220, 50, 210, 220)]
-        # self.colours = ['green', 'red', 'yellow', 'blue']
         self.current = 0
         self.column_function = {}
         self.column_to_id = {}
@@ -65,6 +67,9 @@ class DataHolder:
         self.method_column = 'method'
         self.method_options = ['sold','inert','snowplow']
 
+        # restore settings if there is any
+        if os.path.exists(path):
+            self.retore_settings(path)
 
     def add_column_function(self, column_id, column_name, func_id):
         self.column_to_id[column_name] = column_id
@@ -86,6 +91,14 @@ class DataHolder:
     def reset(self):
         self.column_function = {}
         self.column_to_id = {}
+
+    def restore_settings(self, path):
+        self.priority_column = 'priority'
+        self.transit_column = 'transit_cars'
+        self.priority_options = [1,2,3]
+        self.method_column = 'method'
+        self.method_options = ['sold','inert','snowplow']
+
 
 
 
@@ -245,39 +258,19 @@ class SnowPlow:
             self.iface.removeToolBarIcon(action)
 
     def get_layer(self):
+        '''
+            returns currently selected layer
+        '''
         layer = QgsProject.instance().mapLayer(self.dlg.layer_sel.currentData())
         if not layer:
             self.iface.messageBar().pushMessage("Error", "No layer is selected.", level=Qgis.Critical)
         else:
             return layer
 
-    def _select_new_car(self, symbol, renderer, label, expression, color, size=0.5):
-        root_rule = renderer.rootRule()
-        rule = root_rule.children()[0].clone()
-        rule.setLabel(label)
-        rule.setFilterExpression(expression)
-        rule.symbol().setColor(color)
-        rule.symbol().setWidth(size)
-        root_rule.appendChild(rule)
-
-    def _select_cars(self):
-        layer = self.get_layer()
-        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
-        renderer = QgsRuleBasedRenderer(symbol)
-        selected = []
-        # set the not selected colour
-        renderer.rootRule().children()[0].symbol().setColor(QColor(200,200,200,255))
-        for car in self.dlg.cars.selectedItems():
-            QgsMessageLog.logMessage(car.text(), 'SnowPlow')
-            selected.append(' \"car_id_str\" NOT LIKE \'% {} %\''.format(str(car.text())))
-            self._select_new_car(symbol, renderer, 'Car {}'.format(str(car.text())), ' \"car_id_str\" LIKE \'% {} %\''.format(str(car.text())), self.data_holder.next_colour(), 1)
-
-        layer.setRenderer(renderer)
-        layer.triggerRepaint()
-        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
-
-
     def _get_feat_names(self):
+        '''
+            return the names and types of features of selected layer
+        '''
         layer = self.get_layer()
         fs = layer.getFeatures()
         f = next(fs)
@@ -365,7 +358,6 @@ class SnowPlow:
             item = QStandardItem('{}. {}'.format(i, layer.name()))
             self.dlg.layer_sel.model().appendRow(item)
             self.dlg.layer_sel.setItemData(i, str(layer.id()))
-        
 
     def fill_column_sel(self):
         '''
@@ -387,7 +379,6 @@ class SnowPlow:
         self.dlg.func_sel.clear()
         for i in self.data_holder.funcs.keys():
             self.dlg.func_sel.addItem(self.data_holder.funcs[i][0])
-        
 
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
@@ -559,12 +550,11 @@ class SnowPlow:
         # rows = product of selected rows
         rows = sorted([x for x in product(*row_opts)])
 
-        # create dict with keys like '1,salt'
-        table_rows = {}
-        to_func = {}
-        use_row = {}
-        feature_count = {}
-        use_col = {}
+        table_rows = {}     # Value for each row X column after func has bee applied
+        to_func = {}        # Accumulated values for each row X column
+        use_row = {}        # Does the row contain any useful info?
+        feature_count = {}  # Number of rows (features) in the original file for each of the computer row
+        use_col = {}        # Does the column contain any useful info?
 
         # Initialize lists and dicts
         for row in rows:
@@ -579,9 +569,6 @@ class SnowPlow:
         for col in columns:
             use_col[col] = False
 
-        # fill the dict  
-        # TODO replace use_row with feature_count > 0
-        
         # accumulate values for each row X column
         for f in layer.getFeatures():
             row_key = ','.join([str(f[x]) for x in selected_rows]) 
@@ -604,12 +591,12 @@ class SnowPlow:
                         try:
                             table_rows[row_key][col] = func(to_func[row_key][col])
                         except ValueError as e:
-                            QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
                             raise e
 
         row_count = len([1 for x in use_row.keys() if use_row[x]]) + 1          # + 1 for final row
         self.dlg.tableStats.setRowCount(row_count)
 
+        # create translation from id to row name 
         row_to_id = {}
         id_to_row = []
         i = 0
@@ -619,9 +606,7 @@ class SnowPlow:
                 id_to_row.append(row_key)
                 i += 1
 
-
-        # vertical_header = [' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]]
-
+        # create names for the vertical header
         vertical_header = []
         for index in range(len(id_to_row)):
             for row in rows:
@@ -633,6 +618,7 @@ class SnowPlow:
         self.dlg.tableStats.setVerticalHeaderLabels(vertical_header)
         self.msg(vertical_header)
 
+        # create translation from id to row name 
         col_to_id = {}
         id_to_col = []
         i = 0
@@ -642,22 +628,19 @@ class SnowPlow:
                 id_to_col.append(col)
                 i += 1
 
+        # create names for horizontal header
         self.dlg.tableStats.setColumnCount(len([1 for index in range(len(id_to_col)) if use_col[id_to_col[index]]]) + 1)
-        
         horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(id_to_col[index]),id_to_col[index]) for index in range(len(id_to_col)) if use_col[id_to_col[index]]]
         horizontal_func_cols.append('# ROWS')
-
         self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
 
-
-
-        # fill in the table
+        # fill in the (ui) table
         for row_index in range(len(id_to_row)):
             row_key = id_to_row[row_index]
             if use_row[row_key]:
                 for col_index in range(len(id_to_col)):
                     col_key = id_to_col[col_index]
-                    v = '---' if table_rows[row_key][col_key] is None else '{:.2f}'.format(float(table_rows[row_key][col_key]))
+                    v = '---' if table_rows[row_key][col_key] is None else '{:.2f}'.format(float(table_rows[row_key][col_key]))         # if there is no value for given field, write '---'
                     item = QTableWidgetItem()
                     item.setData(Qt.DisplayRole, QVariant(v))
                     self.dlg.tableStats.setItem(row_index,col_index,item)
@@ -667,7 +650,7 @@ class SnowPlow:
 
 
 
-        # final row for func(all)
+        # final row = last_row[column] = func(value[row=1...n][column]) where func is sum, avg, min, max, ..
         for col_index in range(len(id_to_col)):
             col_key = id_to_col[col_index]
             ls = []
@@ -683,15 +666,10 @@ class SnowPlow:
                 self.dlg.tableStats.setItem(len(id_to_row), col_index, item)
 
 
-        # bottom right corner, delete
+        # bottom right corner, sum  
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, QVariant('{}'.format(int(sum([feature_count[k] for k in feature_count.keys()])))))
         self.dlg.tableStats.setItem(len(id_to_row), len(id_to_col), item)
-        self.msg('new position')
-
-
-
-
 
     def run(self):
         """Run method that performs all the real work"""
@@ -703,27 +681,24 @@ class SnowPlow:
             self.dlg = SnowPlowDialog()
             self.fill_layers()
 
-
+            # Init of buttons
             apply_row_column = self.dlg.row_sel_buttons.button(QDialogButtonBox.Apply)
             apply_row_column.clicked.connect(self._apply_rows_cols)
             reset_row_column_selection = self.dlg.row_sel_buttons.button(QDialogButtonBox.Reset)
             reset_row_column_selection.clicked.connect(self._reset_selection_columns)
-
             apply_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Apply)
             apply_transit.clicked.connect(self._apply_transit)
             reset_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.Reset)
             reset_transit.clicked.connect(self._reset_selection_cars)
             all_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.YesToAll)
             all_transit.clicked.connect(self._all_transits)
-
             self.dlg.refresh.clicked.connect(self.initial_draw)
 
             layer = self.get_layer()
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())
             self.renderer = QgsRuleBasedRenderer(symbol)
 
-
-
+            # Init of UI elements
             self.fill_column_sel()
             self.fill_func_sel()
             self.fill_rows()
@@ -732,7 +707,6 @@ class SnowPlow:
             self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
             self.dlg.func_sel.currentIndexChanged.connect(self.func_sel_changed)
             self.first_start = False
-            # self.initial_draw()
 
 
         # show the dialog

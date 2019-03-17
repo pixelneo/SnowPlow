@@ -280,7 +280,7 @@ class SnowPlow:
         layer = self.get_layer()
         fs = layer.getFeatures()
         f = next(fs)
-        return set([(x.name(), x.typeName()) for x in f.fields()])
+        return list(set([(x.name(), x.typeName()) for x in f.fields()]))
 
     def fill_cars(self):
         '''
@@ -540,7 +540,7 @@ class SnowPlow:
         names = [x[0] for x in names_col]
 
         # all reasonable (numerical, summable) columns which are not in the rows
-        columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real'] and x[0] not in selected_rows]
+        columns = sorted([x[0] for x in names_col if x[1] in ['Integer', 'Real'] and x[0] not in selected_rows])
         # columns = list((set(names).difference(selected_rows)).intersection(set(possible_columns)))
 
         # get all possible options of each feature in rows
@@ -548,55 +548,57 @@ class SnowPlow:
         for f in selected_rows:
             options = set()
             for x in layer.getFeatures():
-                if x[f]:
+                if x[f] != NULL:
                     options.add(x[f])
             row_opts.append(list(options))
 
         # rows = product of selected rows
-        rows = [x for x in product(*row_opts)]
+        rows = sorted([x for x in product(*row_opts)])
 
         # create dict with keys like '1,salt'
         table_rows = {}
         to_func = {}
         use_row = {}
         feature_count = {}
+        use_col = {}
 
         # Initialize lists and dicts
         for row in rows:
             row_key = ','.join([str(i) for i in row])
-            table_rows[row_key] = [0.0]*len(columns)
-            to_func[row_key] = []
-            for _ in range(len(columns)):
-                to_func[row_key].append([])
+            table_rows[row_key] = {}
+            to_func[row_key] = {}
+            for col in columns:
+                to_func[row_key][col] = []
+                table_rows[row_key][col] = None
             use_row[row_key] = False
             feature_count[row_key] = 0
-
+        for col in columns:
+            use_col[col] = False
 
         # fill the dict  
         # TODO replace use_row with feature_count > 0
-
+        
+        # accumulate values for each row X column
         for f in layer.getFeatures():
             row_key = ','.join([str(f[x]) for x in selected_rows]) 
-            try:
-                x = feature_count[row_key]
-                # if the previous statement does not fail, use row
-                use_row[row_key] = True
-            except KeyError as ke:
+            if 'NULL' in row_key:
                 continue
+            # if the previous statement does not fail, use row
+            use_row[row_key] = True
             feature_count[row_key] += 1
-            for i, col in enumerate(columns):
+            for col in columns:
                 if f[col] != NULL:
-                    to_func[row_key][i].append(float(f[col]))
+                    to_func[row_key][col].append(float(f[col]))
 
-        for k in to_func.keys():
-            if use_row[k]:
-                for i, col in enumerate(columns):
-                    if len(to_func[k][i]) != 0:
-                        row_key = k
+        # apply function to accumulated list for each row X column
+        for row_key in to_func.keys():
+            if use_row[row_key]:
+                for col in columns:
+                    if len(to_func[row_key][col]) != 0:
+                        use_col[col] = True
                         func = self.data_holder.function_for_column(col)
                         try:
-                            # TODO is use_row not null
-                            table_rows[row_key][i] = func(to_func[row_key][i])
+                            table_rows[row_key][col] = func(to_func[row_key][col])
                         except ValueError as e:
                             QgsMessageLog.logMessage(str(to_func), 'SnowPlow')
                             raise e
@@ -604,66 +606,84 @@ class SnowPlow:
         row_count = len([1 for x in use_row.keys() if use_row[x]]) + 1          # + 1 for final row
         self.dlg.tableStats.setRowCount(row_count)
 
-        vertical_header = [' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]]
-        vertical_header.append('TOTAL')
-        self.dlg.tableStats.setVerticalHeaderLabels(vertical_header)
-        use_cols = []
-        use_col_ind = []
-        for col in range(len(columns)):
-            null = True
-            for k in table_rows.keys():
-                if use_row[k] and float(table_rows[k][col]) != 0.0:
-                    null = False
-                    break
-            if not null:
-                use_cols.append(columns[col])
-                use_col_ind.append(col)
-
-        # self.dlg.tableStats.setColumnCount(len(use_cols))
-        self.dlg.tableStats.setColumnCount(len(use_cols) + 1)
-        
-        horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(col),col) for col in use_cols]
-        horizontal_func_cols.append('# ROWS')
-        self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
-
-        # fill in the table
+        row_to_id = {}
+        id_to_row = []
         i = 0
-        for k in table_rows.keys():
-            if use_row[k]:
-                for tab_j,col in enumerate(use_col_ind):
-                    j = col
-                    v = table_rows[k][j]
-                    item = QTableWidgetItem()
-                    item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
-                    self.dlg.tableStats.setItem(i,tab_j,item)
-                item = QTableWidgetItem()
-                item.setData(Qt.DisplayRole, QVariant('{}'.format(feature_count[k])))
-                self.dlg.tableStats.setItem(i, len(use_cols), item)
+        for row_key in to_func.keys():
+            if use_row[row_key]:
+                row_to_id[row_key] = i
+                id_to_row.append(row_key)
                 i += 1
 
+
+        # vertical_header = [' ✕ '.join([str(x) for x in row]) for row in rows if use_row[','.join([str(i) for i in row])]]
+
+        vertical_header = []
+        for index in range(len(id_to_row)):
+            for row in rows:
+                if use_row[id_to_row[index]] and ','.join([str(x) for x in row]) == id_to_row[index]:
+                    vertical_header.append(' ✕ '.join([str(x) for x in row]))
+
+
+        vertical_header.append('TOTAL')
+        self.dlg.tableStats.setVerticalHeaderLabels(vertical_header)
+        self.msg(vertical_header)
+
+        col_to_id = {}
+        id_to_col = []
+        i = 0
+        for col in columns:
+            if use_col[col]:
+                col_to_id[col] = i
+                id_to_col.append(col)
+                i += 1
+
+        self.dlg.tableStats.setColumnCount(len([1 for index in range(len(id_to_col)) if use_col[id_to_col[index]]]) + 1)
+        
+        horizontal_func_cols = ['{}({})'.format(self.data_holder.function_name_for_column(id_to_col[index]),id_to_col[index]) for index in range(len(id_to_col)) if use_col[id_to_col[index]]]
+        horizontal_func_cols.append('# ROWS')
+
+        self.dlg.tableStats.setHorizontalHeaderLabels(horizontal_func_cols)
+
+
+
+        # fill in the table
+        for row_index in range(len(id_to_row)):
+            row_key = id_to_row[row_index]
+            if use_row[row_key]:
+                for col_index in range(len(id_to_col)):
+                    col_key = id_to_col[col_index]
+                    v = '---' if table_rows[row_key][col_key] is None else '{:.2f}'.format(float(table_rows[row_key][col_key]))
+                    item = QTableWidgetItem()
+                    item.setData(Qt.DisplayRole, QVariant(v))
+                    self.dlg.tableStats.setItem(row_index,col_index,item)
+                item = QTableWidgetItem()
+                item.setData(Qt.DisplayRole, QVariant('{}'.format(feature_count[row_key])))
+                self.dlg.tableStats.setItem(row_index, len(id_to_col), item)
+
+
+
         # final row for func(all)
-        j = 0
-        for i, col in zip(use_col_ind,use_cols):
+        for col_index in range(len(id_to_col)):
+            col_key = id_to_col[col_index]
             ls = []
-            for k in table_rows.keys():
-                if use_row[k]:
-                    ls.extend(to_func[k][i])
+            for row_index in range(len(id_to_row)):
+                row_key = id_to_row[row_index]
+                if use_row[row_key]:
+                    ls.extend(to_func[row_key][col_key])
             if len(ls) != 0:
-                func = self.data_holder.function_for_column(col)
+                func = self.data_holder.function_for_column(col_key)
                 v = func(ls)
                 item = QTableWidgetItem()
                 item.setData(Qt.DisplayRole, QVariant('{:.2f}'.format(float(v))))
-                self.dlg.tableStats.setItem(row_count - 1, j, item)
-                j += 1
+                self.dlg.tableStats.setItem(len(id_to_row), col_index, item)
 
 
         # bottom right corner, delete
         item = QTableWidgetItem()
         item.setData(Qt.DisplayRole, QVariant('{}'.format(int(sum([feature_count[k] for k in feature_count.keys()])))))
-        self.dlg.tableStats.setItem(row_count - 1, len(use_cols), item)
+        self.dlg.tableStats.setItem(len(id_to_row), len(id_to_col), item)
         self.msg('new position')
-        self.msg(row_count-1)
-        self.msg(len(use_cols))
 
 
 

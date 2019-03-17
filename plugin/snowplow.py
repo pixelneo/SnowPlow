@@ -42,15 +42,6 @@ import re
 import json
 # from utils_snowplow import *
 
-def qgis_list_to_list(qgis_str):
-    '''
-        This method converts list in string in format (element_count:element0,element1,...,elementn-1)
-        to python list
-    '''
-    # comma delimited list
-    lst = [int(x) for x in qgis_str.split(',')]
-    return lst
-
 class DataHolder:
     def __init__(self):
         plug_dir = os.path.dirname(__file__)
@@ -79,7 +70,7 @@ class DataHolder:
 
     def function_for_column(self, column_name):
         return self.funcs[self.column_function[self.column_to_id[column_name]]][1]
-    
+
     def function_for_column_id(self, column_id):
         return self.funcs[self.column_function[column_id]][1]
 
@@ -102,11 +93,6 @@ class DataHolder:
             self.priority_options = d["priority_options"]
             self.method_column = d["method_column"]
             self.method_options = d["method_options"]
-
-
-
-
-
 
 class SnowPlow:
     """QGIS Plugin Implementation."""
@@ -159,7 +145,6 @@ class SnowPlow:
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('SnowPlow', message)
-
 
     def add_action(
         self,
@@ -235,7 +220,6 @@ class SnowPlow:
 
         return action
 
-
     def msg(self, msg):
         QgsMessageLog.logMessage(str(msg), 'SnowPlow')
 
@@ -251,7 +235,6 @@ class SnowPlow:
 
         # will be set False in run()
         self.first_start = True
-
 
     def unload(self):
         """Removes the plugin menu item and icon from QGIS GUI."""
@@ -310,7 +293,6 @@ class SnowPlow:
         self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
         self.dlg.listRows.sortItems()
 
-
     def layer_changed(self, i):
         '''
             Layer has been changed in the selection.
@@ -350,7 +332,6 @@ class SnowPlow:
         for i,c in enumerate(sorted(columns)):
             data_holder.add_column_function(i,c, 0)   # 0 = 'sum' function
 
- 
     def fill_layers(self):
         '''
             Fills the list with LineString layers.
@@ -375,7 +356,6 @@ class SnowPlow:
             self.dlg.column_sel.addItem(c)
             self.data_holder.add_column_function(i,c, 0)   # 0 = 'sum' function
 
-
     def fill_func_sel(self):
         '''
             Fills ComboBox with the names or function to be applied on column 
@@ -383,7 +363,6 @@ class SnowPlow:
         self.dlg.func_sel.clear()
         for i in self.data_holder.funcs.keys():
             self.dlg.func_sel.addItem(self.data_holder.funcs[i][0])
-
 
     def colour_feature(self, colours, column, renderer, size=0.5, options=[1,2,3]):
         '''
@@ -469,7 +448,6 @@ class SnowPlow:
         rule.symbol().setWidth(size)
         root_rule.appendChild(rule)
 
-
     def _apply_transit(self):
         '''
             Colour transits of selected cars.
@@ -496,7 +474,6 @@ class SnowPlow:
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
 
-
     def _all_transits(self):
         '''
             Adds new rule to the renderer to highlight all transits.
@@ -518,13 +495,11 @@ class SnowPlow:
         self.dlg.cars.clearSelection()
         self.initial_draw()
 
-
     def _reset_selection_columns(self):
         '''
             Resets selection of columns and rows.
         '''
         self.dlg.listRows.clearSelection()
-
 
     def _apply_rows_cols(self):
         '''
@@ -715,9 +690,3 @@ class SnowPlow:
 
         # show the dialog
         self.dlg.show()
-
-        # Run the dialog event loop
-        #result = self.dlg.exec_()
-        # See if OK was pressed
-        #if result:
-         #   pass

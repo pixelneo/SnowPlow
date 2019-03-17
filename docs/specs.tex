@@ -48,20 +48,18 @@ Firstly it colours edges according to specified rules.
 Also it provides the user with statistics of the data.
 
 
-\section{Basic specification}
+\section{Specification}
 \begin{itemize}
-    \item Selection of layer to which the plugin will be applied.
-    \item On the left there will be settings – layer selection, row selection for the statistics, function (sum, avg, max, min, median,  ...) to apply on the remaining columns.
+    \item Selection of layer to which the plugin is applied.
+    \item On the left of the window there settings – layer selection, row selection for the statistics, function (sum, avg, max, min) to apply on the remaining columns.
     \item The function can be different for every column.
-    \item Button to invoke colourization and labeling. Resets current colourization and makes new one for selected layer.
-    \item Highlighting all transits of selection of cars – roads, which are not maintained by the given cars but the cars use them for transport. 
-        %\emph{note} This will be done by event onClick on given car in listwidget or writing the car ID)
-        %Deleting can be done by clicking on a car in a listwidget of selected cars.
-        %Each transit can have symbol denoting the transiting car.
-    \item Plugin will distinguish data types of layers, ie. not summing over textual data. Also is should advise the user not to select columns with high number of disctinct values, eg. float type.
-    %\item \emph{Maybe}, use multithreading for computing statistics.
-        
-
+    \item There is button to invoke colourization and labeling. It resets current colourization and makes new one for selected layer.
+    \item Highlighting all (at once, or only selected) transits of selection of cars – roads, which are not maintained by the given cars but the cars use them for transport. 
+    \item Plugin distinguishes data types of features in layers, ie. not summing over textual data. 
 \end{itemize}
+
+\section{User Manual}
+\subsection{Installation}
+
 
 \end{document}

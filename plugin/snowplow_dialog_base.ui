@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>941</width>
-    <height>572</height>
+    <width>1059</width>
+    <height>599</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -229,6 +229,13 @@
         <widget class="QPushButton" name="refresh">
          <property name="text">
           <string>Refresh colouring and labels</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="reloadLayers">
+         <property name="text">
+          <string>Reload Layers</string>
          </property>
         </widget>
        </item>

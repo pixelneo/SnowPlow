@@ -60,6 +60,7 @@ class DataHolder:
         self.funcs = {0: ('sum', lambda x: sum(x)), 1: ('avg', lambda x: mean(x)), 2: ('max',lambda x: max(x)), 3: ('min',lambda x: min(x))}
         self.car_label = 'maintaining_car'
         self.priority_column = 'priority'
+        self.transit_column = 'transit_cars'
         self.priority_options = [1,2,3]
         self.method_column = 'method'
         self.method_options = ['sold','inert','snowplow']
@@ -312,9 +313,6 @@ class SnowPlow:
         self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
         self.dlg.listRows.sortItems()
 
-    def get_all_layers(self):
-        pass
-
 
     def layer_changed(self, i):
         '''
@@ -344,6 +342,10 @@ class SnowPlow:
         self.data_holder.column_function[self.dlg.column_sel.currentIndex()] = i
 
     def reset_data(self, data_holder):
+        '''
+            Resets data_holder and fills again the combobox with columns
+            Usually called when layer is changed.
+        '''
         data_holder.reset()
         names_col = self._get_feat_names()
         columns = [x[0] for x in names_col if x[1] in ['Integer', 'Real']]
@@ -488,7 +490,7 @@ class SnowPlow:
 
         exprs = []
         for t, car in zip(selected_cars_texts, selected_cars):
-            expr = 'regexp_match( "transit_cars", \'((^)|(.*,)){}((,.*)|($))\')'.format(str(car))
+            expr = 'regexp_match( "{}", \'((^)|(.*,)){}((,.*)|($))\')'.format(self.data_holder.transit_column, str(car))
             exprs.append(expr)
             # select_new_transit(symbol, self.renderer, t, ' or '.join(exprs), colour)
             self.select_new_transit(symbol, self.renderer, t, expr, colour)
@@ -501,19 +503,18 @@ class SnowPlow:
 
 
     def _all_transits(self):
+        '''
+            Adds new rule to the renderer to highlight all transits.
+        '''
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         colour = QColor(0,255,0)
 
-
-        expr = '"transit_cars" IS NOT NULL AND "transit_cars" != \'\''
+        expr = '"{}" IS NOT NULL AND "{}" != \'\''.format(self.data_holder.transit_column, self.data_holder.transit_column)
         self.select_new_transit(symbol, self.renderer, 'Transits', expr, colour)
         layer.setRenderer(self.renderer)
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
-
-
-
 
     def _reset_selection_cars(self):
         '''
@@ -532,10 +533,9 @@ class SnowPlow:
 
     def _apply_rows_cols(self):
         '''
-            Computes statistics.
+            Computes statistics and diplays them in tableview
         '''
         self.dlg.tableStats.clear()
-
 
         layer = self.get_layer()
         selected_rows = [x.text() for x in self.dlg.listRows.selectedItems()]

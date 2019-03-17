@@ -95,12 +95,13 @@ class DataHolder:
         self.column_to_id = {}
 
     def restore_settings(self, path):
-        with json.loads(str(path)) as f:
-            self.priority_column = f[priority_column]
-            self.transit_column = f[transit_column]
-            self.priority_options = f[priority_options]
-            self.method_column = f[method_column]
-            self.method_options = f[method_options]
+        with open(path, 'r') as f:
+            d = json.load(f)
+            self.priority_column = d["priority_column"]
+            self.transit_column = d["transit_column"]
+            self.priority_options = d["priority_options"]
+            self.method_column = d["method_column"]
+            self.method_options = d["method_options"]
 
 
 

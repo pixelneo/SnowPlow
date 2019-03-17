@@ -1,5 +1,5 @@
 {
-    "priority_column": "priorityblabla",
+    "priority_column": "priority",
     "transit_column": "transit_cars",
     "method_column": "method",
     "car_label": "maintaining_car",

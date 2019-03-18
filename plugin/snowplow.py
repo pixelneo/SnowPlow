@@ -655,6 +655,14 @@ class SnowPlow:
         self.first_start=True
         self.run()
 
+    def clear(self):
+        layer = self.get_layer()
+        symbol = QgsSymbol.defaultSymbol(layer.geometryType())
+        self.renderer = QgsRuleBasedRenderer(symbol)
+        self.iface.layerTreeView().refreshLayerSymbology(layer.id())
+        layer.triggerRepaint()
+
+
     def run(self):
         """Run method that performs all the real work"""
 
@@ -678,6 +686,7 @@ class SnowPlow:
             all_transit.clicked.connect(self._all_transits)
             self.dlg.refresh.clicked.connect(self.initial_draw)
             self.dlg.reloadLayers.clicked.connect(self.rerun)
+            self.dlg.clear.clicked.connect(self.clear)
 
             layer = self.get_layer()
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())
@@ -691,6 +700,7 @@ class SnowPlow:
             self.dlg.layer_sel.currentIndexChanged.connect(self.layer_changed)
             self.dlg.column_sel.currentIndexChanged.connect(self.column_sel_changed)
             self.dlg.func_sel.currentIndexChanged.connect(self.func_sel_changed)
+            self.initial_draw()
             self.first_start = False
 
 

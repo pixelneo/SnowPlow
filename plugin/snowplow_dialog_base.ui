@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1059</width>
-    <height>599</height>
+    <height>617</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -223,21 +223,44 @@
            </property>
           </widget>
          </item>
+         <item>
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
+           <property name="topMargin">
+            <number>5</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="refresh">
+             <property name="toolTip">
+              <string>Refreshes colouring and labels</string>
+             </property>
+             <property name="text">
+              <string>Refresh</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="clear">
+             <property name="toolTip">
+              <string>Clears colouring and labels</string>
+             </property>
+             <property name="text">
+              <string>Clear</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="reloadLayers">
+             <property name="toolTip">
+              <string>Reloades app – new layer may be added</string>
+             </property>
+             <property name="text">
+              <string>Reload app</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
         </layout>
-       </item>
-       <item>
-        <widget class="QPushButton" name="refresh">
-         <property name="text">
-          <string>Refresh colouring and labels</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="reloadLayers">
-         <property name="text">
-          <string>Reload app</string>
-         </property>
-        </widget>
        </item>
       </layout>
      </item>

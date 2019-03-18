@@ -1,6 +1,6 @@
 \documentclass[12pt,a4paper]{article}
 \setlength\textwidth{145mm}
-\setlength\textheight{247mm}
+\setlength\textheight{227mm}
 
 \usepackage[a-2u]{pdfx}
 
@@ -43,10 +43,9 @@
 \section{Introduction}
 
 \par This program is a plugin to program \href{https://qgis.org/en/site/index.html}{QGIS 3.4}. 
-Its main function is ease the usage of QGIS with certain types of maps.
-Firstly it colours edges according to specified rules.
-Also it provides the user with statistics of the data.
-
+Its main function is ease the usage of QGIS with road maps used for scheduling cars which remove snow.
+The plugin uses colour to distinguish roads with different priorities to maintain them, and to distinguish method used for the maintenance. 
+Also the plugin provides user option to display statistics of the cars and roads.
 
 \section{Specification}
 \begin{itemize}
@@ -67,6 +66,8 @@ The plugin shall appear in the menu "Plugins".
 
 \subsection{Using the application}
 The plugin has one window, depicted in Figure \ref{window}, which contains all controls.
+At the start user can select layer to which his further actions will be applied.
+If the user adds more layer to his project after he has started the plugin, he may have to press \emph{Reload app} to make the plugin recognize the newly added layers.
 
 \begin{figure}[H]\centering
 \includegraphics[width=140mm]{./img/window.png}
@@ -74,8 +75,34 @@ The plugin has one window, depicted in Figure \ref{window}, which contains all c
 \label{window}
 \end{figure}
 
-\subsubsection{Diplaying statistics}
-After selecting rows for grouping, and optionally selecting grouping function, user will be presented with table containing statistics.
-Data are grouped by cartesian product of those selected features for grouping. 
+\subsubsection{Displaying statistics}
+After selecting rows (features) for grouping, and optionally selecting grouping function, user will be presented with table containing statistics.
+Data are grouped by Cartesian product of all unique values of selected features for grouping. 
+
+\par For example in Figure \ref{window} features \emph{priority} and \emph{method} are selected and they have values \emph{1,2,3} and \emph{sold, inert, snowplow} respectively.
+There are no rows corresponding to method \emph{inert} and priority \emph{1} so they are omitted.
+
+\par Last row contains in each column value acquired by applying selected function on all rows.
+Last column contains the number of rows corresponding to given group.
+
+\subsubsection{Transits}
+To highlight transits on the map use can either select each car whose transits he wishes to see or all car transits at once by clicking on \emph{Yes to All} button.
+The resulting effect is in Figure \ref{transit}.
+
+\begin{figure}[H]\centering
+\includegraphics[width=120mm]{./img/transit.png}
+\caption{Illustration of car transit.}
+\label{transit}
+\end{figure}
+
+\subsubsection{Colouring and labeling maps}
+Roads can be coloured according to their priority, by default priorities are 1, 2 and 3. 
+Also roads can be distinguished by method used for their maintenance, by default inert, snowplow and salt. 
+That is done by using more transparent colour and wider line.
+\par This option is invoked on start of the plugin and also by pressing button \emph{Refresh}.
+To turn off the colouring user needs to press \emph{Clear}.
+
+
+
 
 \end{document}

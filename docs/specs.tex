@@ -37,9 +37,9 @@
 \author{Ondřej Měkota}
 
 \maketitle
-%\pagebreak
-%\tableofcontents
-%\pagebreak
+\pagebreak
+\tableofcontents
+\pagebreak
 \section{Introduction}
 
 \par This program is a plugin to program \href{https://qgis.org/en/site/index.html}{QGIS 3.4}. 
@@ -58,20 +58,24 @@ Also it provides the user with statistics of the data.
     \item Plugin distinguishes data types of features in layers, ie. not summing over textual data. 
 \end{itemize}
 
+\pagebreak
 \section{User Manual}
 \subsection{Installation}
 First install QGIS version 3.4 or higher. 
-Then in "Plugin" \rightarrow "Manage and install plugins" \rightarrow "Install from ZIP" \rightarrow \emph{select the path of the zip file} \rightarrow "Install Plugin".
+Then in "Plugin" $\rightarrow$ "Manage and install plugins" $\rightarrow$ "Install from ZIP" $\rightarrow$ \emph{select the path of the zip file} $\rightarrow$ "Install Plugin".
 The plugin shall appear in the menu "Plugins".
 
-\subsection{Controls}
-The plugin has one window, depicted in jo
+\subsection{Using the application}
+The plugin has one window, depicted in Figure \ref{window}, which contains all controls.
 
 \begin{figure}[H]\centering
 \includegraphics[width=140mm]{./img/window.png}
-\caption{}
+\caption{Description of user interface}
 \label{window}
 \end{figure}
 
+\subsubsection{Diplaying statistics}
+After selecting rows for grouping, and optionally selecting grouping function, user will be presented with table containing statistics.
+Data are grouped by cartesian product of those selected features for grouping. 
 
 \end{document}

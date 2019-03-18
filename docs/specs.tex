@@ -81,7 +81,7 @@ If the user adds more layer to his project after he has started the plugin, he m
 
 \subsubsection{Displaying statistics}
 After selecting rows (features) for grouping, and optionally selecting grouping function, user will be presented with table containing statistics.
-Data are grouped by Cartesian product of all unique values of selected features for grouping. 
+Data are grouped by Cartesian product of selected features for grouping. 
 
 \par For example in Figure \ref{window} features \emph{priority} and \emph{method} are selected and they have values \emph{1,2,3} and \emph{sold, inert, snowplow} respectively.
 There are no rows corresponding to method \emph{inert} and priority \emph{1} so they are omitted.
@@ -117,6 +117,8 @@ To turn off the colouring user needs to press \emph{Clear}.
 \end{figure}
 
 \subsection{Settings}
+It is possible to set which features in the data will be used for each action in the plugin, for example which column is used for highlighting by \emph{priority}, by default it is "priority".
+These settings can be found in file \emph{settings.json}.
 
 \section{Programmer's manual}
 The plugin template is created by \href{http://g-sherman.github.io/Qgis-Plugin-Builder/}{Plugin Builder 3} which created class \cd{SnowPlow}.
@@ -143,6 +145,11 @@ This class contains the following methods.
 Class \cd{Snowplow} handles everything in the UI. 
 It fills up lists, comboboxes and tables with information.
 It also reacts on selections of different items in those lists and comboboxes and on pressing buttons.
+
+\par There is one larger function, \cd{\_apply\_rows\_cols}, which 'does the statistics'. 
+It computes the Cartesian product of selected features, finds corresponding values in other columns and applied specified function on them.
+Then it displays the results in table.
+
 
 
 

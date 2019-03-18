@@ -336,6 +336,7 @@ class SnowPlow:
         '''
             Fills the list with LineString layers.
         '''
+
         layer_list = QgsProject.instance().layerTreeRoot().findLayers()
         layers = [lyr.layer() for lyr in layer_list if lyr.layer().geometryType()]      # get LineString layers
 
@@ -650,6 +651,10 @@ class SnowPlow:
         item.setData(Qt.DisplayRole, QVariant('{}'.format(int(sum([feature_count[k] for k in feature_count.keys()])))))
         self.dlg.tableStats.setItem(len(id_to_row), len(id_to_col), item)
 
+    def rerun(self):
+        self.first_start=True
+        self.run()
+
     def run(self):
         """Run method that performs all the real work"""
 
@@ -672,6 +677,7 @@ class SnowPlow:
             all_transit = self.dlg.car_sel_buttons.button(QDialogButtonBox.YesToAll)
             all_transit.clicked.connect(self._all_transits)
             self.dlg.refresh.clicked.connect(self.initial_draw)
+            self.dlg.reloadLayers.clicked.connect(self.rerun)
 
             layer = self.get_layer()
             symbol = QgsSymbol.defaultSymbol(layer.geometryType())

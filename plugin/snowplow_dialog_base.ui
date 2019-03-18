@@ -235,7 +235,7 @@
        <item>
         <widget class="QPushButton" name="reloadLayers">
          <property name="text">
-          <string>Reload Layers</string>
+          <string>Reload app</string>
          </property>
         </widget>
        </item>

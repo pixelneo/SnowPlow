@@ -48,7 +48,6 @@ class DataHolder:
         path = os.path.join(plug_dir, 'settings.json')
 
 
-        self.colours = [(230, 25, 75, 220), (60, 180, 75, 220), (225, 225, 25, 220), (0, 130, 200, 220), (245, 130, 48, 220), (145, 30, 180, 220), (70, 220, 220, 220), (220, 50, 210, 220)]
         self.current = 0
         self.column_function = {}
         self.column_to_id = {}
@@ -72,15 +71,8 @@ class DataHolder:
     def function_for_column(self, column_name):
         return self.funcs[self.column_function[self.column_to_id[column_name]]][1]
 
-    def function_for_column_id(self, column_id):
-        return self.funcs[self.column_function[column_id]][1]
-
     def function_name_for_column(self, column_name):
         return self.funcs[self.column_function[self.column_to_id[column_name]]][0]
-
-    def next_colour(self):
-        self.current = (self.current + 1) % len(self.colours)
-        return QColor(*self.colours[self.current])
 
     def reset(self):
         self.column_function = {}

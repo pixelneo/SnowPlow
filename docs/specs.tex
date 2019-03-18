@@ -26,12 +26,16 @@
 \usepackage{paralist}       % improved enumerate and itemize
 \usepackage[usenames]{xcolor}  % typesetting in color
 \usepackage{float}          % putting images at desired place
+\usepackage{listings}
+
 
 \hypersetup{unicode}
 \hypersetup{breaklinks=true}
 \DefineVerbatimEnvironment{code}{Verbatim}{fontsize=\small, frame=single}
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
+\newcommand{\cd}[1]{\texttt{#1}}
+
 \begin{document}
 \title{SnowPlow – specification}
 \author{Ondřej Měkota}
@@ -99,9 +103,41 @@ The resulting effect is in Figure \ref{transit}.
 Roads can be coloured according to their priority, by default priorities are 1, 2 and 3. 
 Also roads can be distinguished by method used for their maintenance, by default inert, snowplow and salt. 
 That is done by using more transparent colour and wider line.
+Also roads are labeled by identifier of car which maintains it.
+
 \par This option is invoked on start of the plugin and also by pressing button \emph{Refresh}.
 To turn off the colouring user needs to press \emph{Clear}.
 
+\par In Figure \ref{colours} colouring and labeling of roads is shown.
+
+\begin{figure}[H]\centering
+\includegraphics[width=120mm]{./img/colours.png}
+\caption{Illustration map colouring used to distinguish roads by different features.}
+\label{colours}
+\end{figure}
+
+\subsection{Settings}
+
+\section{Programmer's manual}
+The plugin template is created by \href{http://g-sherman.github.io/Qgis-Plugin-Builder/}{Plugin Builder 3} which created class \cd{SnowPlow}.
+Class \cd{DataHolder} handles user settings and generally things that may change in time.
+
+\subsection{DataHolder}
+This class contains the following methods.
+\begin{itemize}
+    \item \cd{\_\_init\_\_(self)} 
+        – initialization of properties, calles method \cd{restore\_settings}
+    \item \cd{add\_column\_function(self, column\_id, column\_name, func\_id)} 
+        – assigns selected function to a feature (column)
+    \item \cd{function\_for\_column(self, column\_name)}
+        – returns function (lambda function) for given column 
+    \item \cd{function\_name\_for\_column(self, column\_name)}
+        – returns the name of function for given column
+    \item \cd{reset(self)}
+        – reinitializes all variables
+    \item \cd{restore\_settings(self, path)}
+        – restore from file on the provided path
+\end{itemize}
 
 
 

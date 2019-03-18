@@ -4,5 +4,6 @@
     "method_column": "method",
     "car_label": "maintaining_car",
     "priority_options": [1,2,3],
-    "method_options": ["sold","inert","snowplow"]
+    "method_options": ["sold","inert","snowplow"],
+    "id_column": "id"
 }

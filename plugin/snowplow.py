@@ -56,6 +56,7 @@ class DataHolder:
         self.car_label = 'maintaining_car'
         self.priority_column = 'priority'
         self.transit_column = 'transit_cars'
+        self.id_column = 'id'
         self.priority_options = [1,2,3]
         self.method_column = 'method'
         self.method_options = ['sold','inert','snowplow']
@@ -93,6 +94,7 @@ class DataHolder:
             self.priority_options = d["priority_options"]
             self.method_column = d["method_column"]
             self.method_options = d["method_options"]
+            self.id_column = d["id_column"]
 
 class SnowPlow:
     """QGIS Plugin Implementation."""
@@ -273,14 +275,13 @@ class SnowPlow:
         car_ids = set()
         try:
             for f in layer.getFeatures():
-                if 'car' in f['id']:
-                    car_ids.add(f['id'])
+                if 'car' in f[self.data_holder.id_column]:
+                    car_ids.add(f[self.data_holder.id_column])
 
             car_ids = sorted(car_ids)
             self.dlg.cars.addItems([str(x) for x in list(car_ids)])
         except Exception as e:
             self.iface.messageBar().pushMessage("Warning", "Most likely, selected layer contains no cars.")
-            raise e
 
     def fill_rows(self):
         '''
@@ -288,7 +289,6 @@ class SnowPlow:
         '''
         self.dlg.listRows.clear()
         names = self._get_feat_names()
-
 
         self.dlg.listRows.addItems([str(x[0]) for x in list(names) if x[1] in ['Integer', 'String', 'Boolean']])
         self.dlg.listRows.sortItems()
@@ -659,6 +659,7 @@ class SnowPlow:
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         self.renderer = QgsRuleBasedRenderer(symbol)
+        layer.setRenderer(self.renderer)
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
         layer.triggerRepaint()
 

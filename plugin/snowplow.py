@@ -363,15 +363,6 @@ class SnowPlow:
             Called on `initial_draw`.
         '''
 
-        def select_new_priority(symbol, renderer, label, expression, color, size=0.5):
-            root_rule = renderer.rootRule()
-            rule = root_rule.children()[0].clone()
-            rule.setLabel(label)
-            rule.setFilterExpression(expression)
-            rule.symbol().setColor(color)
-            rule.symbol().setWidth(size)
-            root_rule.appendChild(rule)
-
         layer = self.get_layer()
         symbol = QgsSymbol.defaultSymbol(layer.geometryType())
         selected = []
@@ -380,7 +371,7 @@ class SnowPlow:
         for i, colour in zip(options,colours):
             QgsMessageLog.logMessage(str(i), 'SnowPlow')
             # selected.append(' \"priority\" NOT LIKE \'% {} %\''.format(str(car.text())))
-            select_new_priority(symbol, renderer, '{} {}'.format(column, str(i)), ' \"{}\" LIKE \'%{}%\''.format(column, str(i)), QColor(*colour), size)
+            self.add_new_rule(symbol, renderer, '{} {}'.format(column, str(i)), ' \"{}\" LIKE \'%{}%\''.format(column, str(i)), QColor(*colour), size)
 
         layer.setRenderer(renderer)
         layer.triggerRepaint()
@@ -432,7 +423,10 @@ class SnowPlow:
         layer.setLabeling(ls)
         layer.triggerRepaint()
 
-    def select_new_transit(self, symbol, renderer, label, expression, color, size=4.0):
+    def add_new_rule(self, symbol, renderer, label, expression, color, size=4.0):
+        '''
+            Adds new `expression` (for transit) to supplied `renderer`.
+        '''
         root_rule = renderer.rootRule()
         rule = root_rule.children()[0].clone()
         rule.setLabel(label)
@@ -459,7 +453,7 @@ class SnowPlow:
             expr = 'regexp_match( "{}", \'((^)|(.*,)){}((,.*)|($))\')'.format(self.data_holder.transit_column, str(car))
             exprs.append(expr)
             # select_new_transit(symbol, self.renderer, t, ' or '.join(exprs), colour)
-            self.select_new_transit(symbol, self.renderer, t, expr, colour)
+            self.add_new_rule(symbol, self.renderer, t, expr, colour)
 
         QgsMessageLog.logMessage(str(' OR '.join(exprs)), 'SnowPlow')
 
@@ -476,7 +470,7 @@ class SnowPlow:
         colour = QColor(0,255,0)
 
         expr = '"{}" IS NOT NULL AND "{}" != \'\''.format(self.data_holder.transit_column, self.data_holder.transit_column)
-        self.select_new_transit(symbol, self.renderer, 'Transits', expr, colour)
+        self.add_new_rule(symbol, self.renderer, 'Transits', expr, colour)
         layer.setRenderer(self.renderer)
         layer.triggerRepaint()
         self.iface.layerTreeView().refreshLayerSymbology(layer.id())
